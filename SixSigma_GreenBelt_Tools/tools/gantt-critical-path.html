@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gantt Chart and Critical Path | Green Belt Toolkit</title>
+<meta name="description" content="List activities with durations and predecessors, and get the schedule, the float of each task, the critical path and a Gantt chart.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@500;600;700&display=swap">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<header class="top"><div class="top-in"><a class="brand" href="../index.html"><i></i>Green Belt Toolkit</a><nav class="nav" aria-label="Sections"><a href="../index.html#calculators">Calculators</a><a href="../index.html#tools">Tools</a></nav><button class="icon-btn" id="themeBtn" type="button" aria-label="Switch colour theme">Theme</button></div></header>
+<div class="wrap"><main>
+<section style="padding-top:36px;display:flex;flex-direction:column;gap:10px"><span class="eyebrow">Tool · Define phase</span><h1 style="font-size:clamp(1.8rem,4vw,2.6rem)">Gantt Chart and Critical Path</h1><p class="lead">List activities with durations and predecessors, and get the schedule, the float of each task, the critical path and a Gantt chart.</p></section>
+<section class="tool-page" style="margin-top:28px">
+<div id="tool"><p class="note" style="margin-bottom:12px">Give each activity a short ID, a duration in days, and the IDs of the activities that must finish first, separated by commas. Example: a 12-week Green Belt project.</p><div id="g"></div><div class="out" id="out" style="margin-top:16px"></div></div>
+<div class="acts" style="margin-top:20px"><button class="btn" id="resetBtn" type="button">Reset to example values</button></div>
+</section>
+<div class="pagefoot"><a href="../index.html">All calculators and tools</a><span>Worked examples are illustrative. Check your own data, standards and customer requirements before acting on a result.</span></div>
+</main></div>
+<script src="../assets/lib.js"></script>
+<script>
+
+var grid=gridTable({host:'g',extra:['Start','Finish','Float'],
+ cols:[{k:'id',l:'ID',w:50},{k:'n',l:'Activity',w:200},{k:'d',l:'Days',t:'num',min:0},{k:'p',l:'Predecessors',w:90}],
+ example:[{id:'A',n:'Charter and CTQs',d:5,p:''},{id:'B',n:'Map process',d:4,p:'A'},{id:'C',n:'Collect baseline data',d:10,p:'B'},{id:'D',n:'Gage R&R study',d:6,p:'B'},{id:'E',n:'Analyze root causes',d:8,p:'C,D'},{id:'F',n:'Design pilot',d:5,p:'E'},{id:'G',n:'Run pilot',d:10,p:'F'},{id:'H',n:'Control plan',d:4,p:'E'},{id:'I',n:'Close and hand over',d:3,p:'G,H'}],
+ compute:function(rows){
+  var ix={},errs=[];rows.forEach(function(r,i){var k=String(r.id).trim();if(!k)errs.push('Row '+(i+1)+' has no ID.');else if(k in ix)errs.push('ID '+k+' is used twice.');ix[k]=i;});
+  var pr=rows.map(function(r){return String(r.p||'').split(/[,\s]+/).filter(Boolean);});
+  pr.forEach(function(p,i){p.forEach(function(x){if(!(x in ix))errs.push('Row '+(i+1)+' refers to an unknown ID '+x+'.');if(x===String(rows[i].id).trim())errs.push('Row '+(i+1)+' depends on itself.');});});
+  if(errs.length)return {out:'<div class="verdict bad"><ul class="plain">'+errs.map(function(e){return '<li>'+esc(e)+'</li>';}).join('')+'</ul></div>'};
+  var n=rows.length,ES=[],EF=[],st=[],cyc=false;
+  function fw(i){if(st[i]===2)return;if(st[i]===1){cyc=true;return;}st[i]=1;var es=0;pr[i].forEach(function(p){var j=ix[p];fw(j);if(EF[j]!==undefined)es=Math.max(es,EF[j]);});ES[i]=es;EF[i]=es+nz(rows[i].d);st[i]=2;}
+  for(var i=0;i<n;i++)fw(i);
+  if(cyc)return {out:'<div class="verdict bad">The predecessors form a loop, so no schedule is possible. Remove the circular dependency.</div>'};
+  var dur=Math.max.apply(null,EF.concat([0])),LF=[],LS=[],sc=[];
+  pr.forEach(function(p,j){p.forEach(function(x){(sc[ix[x]]=sc[ix[x]]||[]).push(j);});});
+  var done=[];function bw(i){if(done[i])return;done[i]=1;var lf=dur;(sc[i]||[]).forEach(function(j){bw(j);lf=Math.min(lf,LS[j]);});LF[i]=lf;LS[i]=lf-nz(rows[i].d);}
+  for(i=0;i<n;i++)bw(i);
+  var fl=ES.map(function(e,i){return Math.round((LS[i]-e)*1000)/1000;}),crit=fl.map(function(x){return x<1e-9;});
+  var cells=rows.map(function(r,i){return [ES[i],EF[i],crit[i]?'<b style="color:var(--bad)">0 (critical)</b>':fl[i]];});
+  var W=640,rh=24,H=n*rh+36,lx=190,s='',t='style="font:11px var(--font-mono);fill:var(--ink-2)"';
+  function xs(v){return lx+v/(dur||1)*(W-lx-12);}
+  niceTicks(0,dur,8).forEach(function(v){s+='<line x1="'+xs(v)+'" x2="'+xs(v)+'" y1="4" y2="'+(H-24)+'" style="stroke:var(--line)"/><text x="'+xs(v)+'" y="'+(H-8)+'" text-anchor="middle" '+t+'>'+v+'</text>';});
+  rows.forEach(function(r,i){var y=8+i*rh;s+='<text x="0" y="'+(y+13)+'" '+t+'>'+esc(String(r.id)+' '+String(r.n).slice(0,24))+'</text><rect x="'+xs(ES[i])+'" y="'+y+'" width="'+Math.max(2,xs(EF[i])-xs(ES[i]))+'" height="16" rx="2" style="fill:'+(crit[i]?'var(--bad)':'var(--accent)')+'"/>';
+   if(fl[i]>0)s+='<line x1="'+xs(EF[i])+'" x2="'+xs(EF[i]+fl[i])+'" y1="'+(y+8)+'" y2="'+(y+8)+'" stroke-dasharray="3 3" style="stroke:var(--ink-2)"/>';});
+  var path=rows.filter(function(r,i){return crit[i];}).sort(function(a,b){return ES[rows.indexOf(a)]-ES[rows.indexOf(b)];}).map(function(r){return r.id;}).join(' → ');
+  return {cells:cells,out:'<div class="kpis">'+kpi('Project duration',dur+' days')+kpi('Activities',n)+kpi('Critical activities',crit.filter(Boolean).length,'warn')+'</div>'+svgWrap(W,H,s,'Gantt chart')+'<div class="verdict warn"><b>Critical path:</b> '+esc(path)+'. Any delay on these activities delays the whole project. Red bars are critical; dashed lines show float.</div><p class="note">Durations are single estimates. Add a buffer to the critical path and review progress against it weekly.</p>'};
+ }});
+setupTool({},function(){},function(){grid.reset();});
+
+</script>
+</body>
+</html>

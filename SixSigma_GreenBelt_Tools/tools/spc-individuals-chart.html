@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Individuals and Moving Range Chart | Green Belt Toolkit</title>
+<meta name="description" content="Paste a series of readings, plot an I-MR control chart and see which points break the limits or form a run.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@500;600;700&display=swap">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<header class="top"><div class="top-in"><a class="brand" href="../index.html"><i></i>Green Belt Toolkit</a><nav class="nav" aria-label="Sections"><a href="../index.html#calculators">Calculators</a><a href="../index.html#tools">Tools</a></nav><button class="icon-btn" id="themeBtn" type="button" aria-label="Switch colour theme">Theme</button></div></header>
+<div class="wrap"><main>
+<section style="padding-top:36px;display:flex;flex-direction:column;gap:10px"><span class="eyebrow">Tool · Control phase</span><h1 style="font-size:clamp(1.8rem,4vw,2.6rem)">Individuals and Moving Range Chart</h1><p class="lead">Paste a series of readings, plot an I-MR control chart and see which points break the limits or form a run.</p></section>
+<section class="tool-page" style="margin-top:28px">
+<div class="calc" id="tool"><div><div class="fields"><div class="field" style="grid-column:1/-1"><label for="i_data">Readings in time order</label><textarea id="i_data" rows="9" spellcheck="false"></textarea></div><div class="field" style="grid-column:1/-1"><label style="display:flex;gap:8px;align-items:center"><input id="i_re" type="checkbox" style="width:auto"> Recalculate limits without points beyond the limits</label></div></div><p class="note" style="margin-top:12px">Readings in time order. Example: 30 daily readings of a coating thickness where the process shifts upward from point 21 and one point spikes at 12. Rules checked: a point beyond 3σ, and eight in a row on one side of the centre line.</p></div><div class="out" id="out"></div></div>
+<div class="acts" style="margin-top:20px"><button class="btn" id="resetBtn" type="button">Reset to example values</button></div>
+</section>
+<div class="pagefoot"><a href="../index.html">All calculators and tools</a><span>Worked examples are illustrative. Check your own data, standards and customer requirements before acting on a result.</span></div>
+</main></div>
+<script src="../assets/lib.js"></script>
+<script>
+var EXTXT="24.35 25.20 25.34 23.81 25.04 26.04 23.39 24.74 24.92 24.35 25.40 31.20 23.83 25.66 25.54 25.76 26.15 25.29 25.10 23.96 27.60 27.10 27.90 27.40 28.00 27.30 27.80 27.20 27.70 27.50";
+
+function limits(x){var mr=[],i;for(i=1;i<x.length;i++)mr.push(Math.abs(x[i]-x[i-1]));var c=mean(x),mb=mean(mr);return {c:c,mb:mb,u:c+2.66*mb,l:c-2.66*mb,mu:3.267*mb,mr:mr};}
+function update(){
+  var x=parseNums($('#i_data').value);
+  if(x.length<8){$('#out').innerHTML='<p class="note">Enter at least 8 readings.</p>';return;}
+  var L=limits(x);
+  if($('#i_re').checked){var keep=x.filter(function(v){return v<=L.u&&v>=L.l;});if(keep.length>=8&&keep.length<x.length){var L2=limits(keep);L=L2;L.mr=limits(x).mr;}}
+  var n=x.length,r1=[],r2=[],i,run=0,side=0;
+  x.forEach(function(v,k){if(v>L.u||v<L.l)r1.push(k);});
+  var flag=new Array(n);
+  for(i=0;i<n;i++){var sd=x[i]>L.c?1:x[i]<L.c?-1:0; if(sd!==0&&sd===side)run++; else {run=sd===0?0:1;side=sd;}
+    if(run>=8){for(var j=i-run+1;j<=i;j++)flag[j]=true;}}
+  var runs=[],st=-1;for(i=0;i<=n;i++){if(flag[i]&&st<0)st=i;if(!flag[i]&&st>=0){runs.push([st+1,i]);st=-1;}}
+  var W=640,H=250,all=x.concat([L.u,L.l]),y0=Math.min.apply(null,all),y1=Math.max.apply(null,all),pd=(y1-y0)*0.08;
+  var f=frame(W,H,1,n,y0-pd,y1+pd,{xl:'Observation',yl:'Individual value'}),s=f.base,t=f.t;
+  [[L.u,'UCL'],[L.l,'LCL']].forEach(function(a){s+='<line x1="'+f.ml+'" x2="'+(W-f.mr)+'" y1="'+f.ys(a[0])+'" y2="'+f.ys(a[0])+'" stroke-dasharray="5 4" style="stroke:var(--bad)"/><text x="'+(W-f.mr)+'" y="'+(f.ys(a[0])-4)+'" text-anchor="end" '+t+'>'+a[1]+' '+fmt(a[0],3)+'</text>';});
+  s+='<line x1="'+f.ml+'" x2="'+(W-f.mr)+'" y1="'+f.ys(L.c)+'" y2="'+f.ys(L.c)+'" style="stroke:var(--ink-2)"/><text x="'+(W-f.mr)+'" y="'+(f.ys(L.c)-4)+'" text-anchor="end" '+t+'>CL '+fmt(L.c,3)+'</text>';
+  s+='<polyline fill="none" stroke-width="1.2" opacity="0.5" style="stroke:var(--ink)" points="'+x.map(function(v,k){return f.xs(k+1)+','+f.ys(v);}).join(' ')+'"/>';
+  x.forEach(function(v,k){var o=v>L.u||v<L.l;s+='<circle cx="'+f.xs(k+1)+'" cy="'+f.ys(v)+'" r="'+(o||flag[k]?4:3)+'" style="fill:'+(o?'var(--bad)':flag[k]?'var(--warn)':'var(--accent)')+'"/>';});
+  var H2=170,my1=Math.max(L.mu,Math.max.apply(null,L.mr))*1.1,f2=frame(W,H2,2,n,0,my1,{xl:'Observation',yl:'Moving range'}),s2=f2.base;
+  s2+='<line x1="'+f2.ml+'" x2="'+(W-f2.mr)+'" y1="'+f2.ys(L.mu)+'" y2="'+f2.ys(L.mu)+'" stroke-dasharray="5 4" style="stroke:var(--bad)"/><line x1="'+f2.ml+'" x2="'+(W-f2.mr)+'" y1="'+f2.ys(L.mb)+'" y2="'+f2.ys(L.mb)+'" style="stroke:var(--ink-2)"/>';
+  L.mr.forEach(function(v,k){s2+='<circle cx="'+f2.xs(k+2)+'" cy="'+f2.ys(v)+'" r="3" style="fill:'+(v>L.mu?'var(--bad)':'var(--accent)')+'"/>';});
+  var sig=[];r1.forEach(function(k){sig.push('Point '+(k+1)+' ('+fmt(x[k],3)+') is '+(x[k]>L.u?'above the UCL':'below the LCL')+'.');});
+  runs.forEach(function(r){sig.push('Points '+r[0]+' to '+r[1]+' sit on one side of the centre line ('+(r[1]-r[0]+1)+' in a row): a sustained shift.');});
+  $('#out').innerHTML='<div class="kpis">'+kpi('Points',n)+kpi('Centre',fmt(L.c,3))+kpi('UCL',fmt(L.u,3))+kpi('LCL',fmt(L.l,3))+kpi('Signals',sig.length,sig.length?'bad':'good')+'</div>'+svgWrap(W,H,s,'Individuals chart')+svgWrap(W,H2,s2,'Moving range chart')+
+   '<div class="verdict '+(sig.length?'bad':'good')+'">'+(sig.length?'<b>Process shows special-cause signals:</b><ul class="plain">'+sig.map(function(m){return '<li>'+esc(m)+'</li>';}).join('')+'</ul>Find and record what changed at those points before touching the limits.':'No signals. The process looks stable, so common-cause variation only.')+'</div>'+
+   '<p class="note">Red points break a limit; amber points belong to a run of eight. Limits are the mean ± 2.66 × the average moving range. Use a stable baseline to set limits, then freeze them. Tick the box above only after you have explained the flagged points.</p>';
+}
+setupTool({i_data:EXTXT},update,function(){$('#i_data').value=EXTXT;$('#i_re').checked=false;});
+
+</script>
+</body>
+</html>

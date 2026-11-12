@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Change Management Plan (ADKAR) | Green Belt Toolkit</title>
+<meta name="description" content="Score each affected group on awareness, desire, knowledge, ability and reinforcement, find their first barrier and plan the action.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@500;600;700&display=swap">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<header class="top"><div class="top-in"><a class="brand" href="../index.html"><i></i>Green Belt Toolkit</a><nav class="nav" aria-label="Sections"><a href="../index.html#calculators">Calculators</a><a href="../index.html#tools">Tools</a></nav><button class="icon-btn" id="themeBtn" type="button" aria-label="Switch colour theme">Theme</button></div></header>
+<div class="wrap"><main>
+<section style="padding-top:36px;display:flex;flex-direction:column;gap:10px"><span class="eyebrow">Tool · Improve phase</span><h1 style="font-size:clamp(1.8rem,4vw,2.6rem)">Change Management Plan (ADKAR)</h1><p class="lead">Score each affected group on awareness, desire, knowledge, ability and reinforcement, find their first barrier and plan the action.</p></section>
+<section class="tool-page" style="margin-top:28px">
+<div id="tool"><p class="note" style="margin-bottom:12px">For each group affected by the change, score each ADKAR element from 1 (not there) to 5 (fully there). The first low score, reading left to right, is that group’s barrier point and tells you what to do. Example: introducing new tray handling in the hone cell.</p><div id="g"></div><div class="out" id="out" style="margin-top:16px"></div></div>
+<div class="acts" style="margin-top:20px"><button class="btn" id="resetBtn" type="button">Reset to example values</button></div>
+</section>
+<div class="pagefoot"><a href="../index.html">All calculators and tools</a><span>Worked examples are illustrative. Check your own data, standards and customer requirements before acting on a result.</span></div>
+</main></div>
+<script src="../assets/lib.js"></script>
+<script>
+
+var EL=[['a','Awareness','Explain why the change is needed and what happens if nothing changes.'],['d','Desire','Address “what is in it for me”; involve people in the design; use a sponsor they respect.'],['k','Knowledge','Training and clear instructions on how to change.'],['b','Ability','Coaching, practice time, support at the point of work, remove obstacles.'],['r','Reinforcement','Recognise success, measure and review, fix what slides back.']];
+var S=[['1','1'],['2','2'],['3','3'],['4','4'],['5','5']];
+var grid=gridTable({host:'g',extra:['Barrier point','Action'],
+ cols:[{k:'n',l:'Group',w:130},{k:'im',l:'Impact',t:'sel',o:['High','Medium','Low']},{k:'a',l:'Awareness',t:'sel',o:S},{k:'d',l:'Desire',t:'sel',o:S},{k:'k',l:'Knowledge',t:'sel',o:S},{k:'b',l:'Ability',t:'sel',o:S},{k:'r',l:'Reinforcement',t:'sel',o:S}],
+ example:[{n:'Hone operators',im:'High',a:'4',d:'2',k:'2',b:'2',r:'1'},{n:'Supervisors',im:'High',a:'5',d:'4',k:'3',b:'3',r:'2'},{n:'Quality technicians',im:'Medium',a:'4',d:'4',k:'4',b:'3',r:'3'},{n:'Maintenance',im:'Medium',a:'3',d:'3',k:'2',b:'2',r:'2'},{n:'Plant leadership',im:'Low',a:'5',d:'5',k:'4',b:'4',r:'3'}],
+ compute:function(rows){
+  var cells=rows.map(function(r){var bp=null;for(var i=0;i<EL.length;i++){if(+r[EL[i][0]]<=2){bp=EL[i];break;}}if(!bp){var mn=EL.slice().sort(function(x,y){return +r[x[0]]-+r[y[0]];})[0];bp=mn;}return ['<b>'+bp[1]+'</b>',esc(bp[2])];});
+  var rank=rows.map(function(r,i){var avg=EL.reduce(function(a,e){return a+(+r[e[0]]);},0)/5;return {n:r.n,avg:avg,im:r.im,w:(r.im==='High'?3:r.im==='Medium'?2:1)*(5-avg)};}).sort(function(a,b){return b.w-a.w;});
+  var all=rank.reduce(function(a,x){return a+x.avg;},0)/(rank.length||1);
+  return {cells:cells,out:'<div class="kpis">'+kpi('Groups',rows.length)+kpi('Average readiness',fmt(all,1)+' of 5',all>=4?'good':all>=3?'warn':'bad')+kpi('Needs attention first',esc(rank[0]?rank[0].n:'-'),'warn')+'</div><h4 style="margin:14px 0 6px">Readiness by group (average of five elements)</h4>'+hbars(rank.map(function(x){return {l:x.n+' ('+x.im+' impact)',v:x.avg,c:x.avg<3?'var(--bad)':x.avg<4?'var(--warn)':'var(--good)'};}),function(v){return fmt(v,1);})+'<p class="note">Work on the groups with the highest impact and lowest readiness first. Do not train people who do not yet see why the change is needed: fix the first barrier before the later ones.</p>'};
+ }});
+setupTool({},function(){},function(){grid.reset();});
+
+</script>
+</body>
+</html>

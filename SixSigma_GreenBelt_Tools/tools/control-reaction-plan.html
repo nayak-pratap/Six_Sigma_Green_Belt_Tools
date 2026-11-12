@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Control Plan and Reaction Plan | Green Belt Toolkit</title>
+<meta name="description" content="Write a control plan with the characteristic, specification, measurement, sampling, control method and reaction plan for each key step, and check it is complete.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@500;600;700&display=swap">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<header class="top"><div class="top-in"><a class="brand" href="../index.html"><i></i>Green Belt Toolkit</a><nav class="nav" aria-label="Sections"><a href="../index.html#calculators">Calculators</a><a href="../index.html#tools">Tools</a></nav><button class="icon-btn" id="themeBtn" type="button" aria-label="Switch colour theme">Theme</button></div></header>
+<div class="wrap"><main>
+<section style="padding-top:36px;display:flex;flex-direction:column;gap:10px"><span class="eyebrow">Tool · Control phase</span><h1 style="font-size:clamp(1.8rem,4vw,2.6rem)">Control Plan and Reaction Plan</h1><p class="lead">Write a control plan with the characteristic, specification, measurement, sampling, control method and reaction plan for each key step, and check it is complete.</p></section>
+<section class="tool-page" style="margin-top:28px">
+<div id="tool"><p class="note" style="margin-bottom:12px">For each critical characteristic say what is controlled, how it is measured and sampled, what method keeps it in control and exactly what happens when it goes out. A reaction plan should contain a stop, contain or escalate action and an owner. Example: the hone cell after the improvement.</p><div id="g"></div><div class="out" id="out" style="margin-top:16px"></div></div>
+<div class="acts" style="margin-top:20px"><button class="btn" id="resetBtn" type="button">Reset to example values</button></div>
+</section>
+<div class="pagefoot"><a href="../index.html">All calculators and tools</a><span>Worked examples are illustrative. Check your own data, standards and customer requirements before acting on a result.</span></div>
+</main></div>
+<script src="../assets/lib.js"></script>
+<script>
+
+var grid=gridTable({host:'g',extra:['Check'],
+ cols:[{k:'st',l:'Process step',w:100},{k:'ch',l:'Characteristic',w:110},{k:'sp',l:'Specification',w:100},{k:'me',l:'Measurement method',w:120},{k:'sa',l:'Sample and frequency',w:110},{k:'ct',l:'Control method',t:'sel',o:['SPC chart','Poka-yoke','Checklist','Audit','Automatic gauge']},{k:'re',l:'Reaction plan',w:200},{k:'ow',l:'Owner',w:90}],
+ example:[
+  {st:'Load fixture',ch:'Insert orientation',sp:'Mark up',me:'Visual',sa:'100%',ct:'Poka-yoke',re:'Fixture will not close. Remove and reload; call supervisor if repeated',ow:'Operator'},
+  {st:'Hone',ch:'Edge radius',sp:'30 ± 5 µm',me:'Optical comparator',sa:'5 per lot',ct:'SPC chart',re:'Out of control: stop the cell, contain the lot, notify process engineer and re-set',ow:'Process engineer'},
+  {st:'Hone',ch:'Brush wear',sp:'< 80% of life',me:'Counter on machine',sa:'Every lot',ct:'Automatic gauge',re:'At limit: stop and replace brush before the next lot',ow:'Operator'},
+  {st:'Transfer',ch:'Pieces per tray',sp:'max 25',me:'Tray marking',sa:'Every tray',ct:'Checklist',re:'',ow:'Operator'},
+  {st:'Final inspection',ch:'Chip rate',sp:'< 2%',me:'20x loupe',sa:'100%',ct:'SPC chart',re:'Above UCL: hold lot, sort 100%, escalate to quality manager',ow:'Quality tech'}],
+ compute:function(rows){
+  var good=0,cells=rows.map(function(r){var m=[];['st','ch','sp','me','sa','ow'].forEach(function(k){if(!String(r[k]).trim())m.push(k==='st'?'step':k==='ch'?'characteristic':k==='sp'?'spec':k==='me'?'measurement':k==='sa'?'sampling':'owner');});
+   var re=String(r.re).trim(),act=/stop|contain|quarantine|hold|notify|escalate|sort|call|remove|replace|re-?set/i.test(re);
+   if(!re)m.push('reaction plan');else if(!act)m.push('a clear action in the reaction plan');
+   if(!m.length)good++;return [m.length?'<span style="color:var(--bad)">Add: '+m.join(', ')+'</span>':'✓ complete'];});
+  var spc=rows.filter(function(r){return r.ct==='SPC chart';}).length,pk=rows.filter(function(r){return r.ct==='Poka-yoke';}).length;
+  return {cells:cells,out:'<div class="kpis">'+kpi('Controls',rows.length)+kpi('Complete',good+' of '+rows.length,good===rows.length?'good':'warn')+kpi('Chart-based',spc)+kpi('Mistake-proofed',pk)+'</div><p class="note">A reaction plan answers three questions: what do I do right now (stop, contain, sort), who do I tell, and when can production resume. Tie each control to the FMEA: every high-risk failure mode should appear here. Review the plan after any process change.</p>'};
+ }});
+setupTool({},function(){},function(){grid.reset();});
+
+</script>
+</body>
+</html>

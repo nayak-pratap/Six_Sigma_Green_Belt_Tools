@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Project Charter Builder | Green Belt Toolkit</title>
+<meta name="description" content="Fill in the key fields of a Green Belt charter, check the problem and goal statements, and copy a clean one-page charter.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@500;600;700&display=swap">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<header class="top"><div class="top-in"><a class="brand" href="../index.html"><i></i>Green Belt Toolkit</a><nav class="nav" aria-label="Sections"><a href="../index.html#calculators">Calculators</a><a href="../index.html#tools">Tools</a></nav><button class="icon-btn" id="themeBtn" type="button" aria-label="Switch colour theme">Theme</button></div></header>
+<div class="wrap"><main>
+<section style="padding-top:36px;display:flex;flex-direction:column;gap:10px"><span class="eyebrow">Tool · Define phase</span><h1 style="font-size:clamp(1.8rem,4vw,2.6rem)">Project Charter Builder</h1><p class="lead">Fill in the key fields of a Green Belt charter, check the problem and goal statements, and copy a clean one-page charter.</p></section>
+<section class="tool-page" style="margin-top:28px">
+<div id="tool"><p class="note" style="margin-bottom:12px">Write the problem without a solution in it, give the goal a baseline, a target and a date, and say what is out of scope. Example: the chipped-insert project.</p>
+<div class="fields" style="grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr))"><div class="field"><label for="h_title">Project title</label><input id="h_title" type="text"></div><div class="field"><label for="h_prob">Problem statement</label><input id="h_prob" type="text"></div><div class="field"><label for="h_metric">Metric (the Y)</label><input id="h_metric" type="text"></div><div class="field"><label for="h_base">Baseline</label><input id="h_base" type="number" step="any"></div><div class="field"><label for="h_target">Target</label><input id="h_target" type="number" step="any"></div><div class="field"><label for="h_unit">Unit</label><input id="h_unit" type="text"></div><div class="field"><label for="h_due">Completion date</label><input id="h_due" type="date"></div><div class="field"><label for="h_in">In scope</label><input id="h_in" type="text"></div><div class="field"><label for="h_out">Out of scope</label><input id="h_out" type="text"></div><div class="field"><label for="h_case">Business case (money or risk)</label><input id="h_case" type="text"></div><div class="field"><label for="h_spon">Sponsor</label><input id="h_spon" type="text"></div><div class="field"><label for="h_lead">Project leader</label><input id="h_lead" type="text"></div><div class="field"><label for="h_team">Team members</label><input id="h_team" type="text"></div><div class="field"><label for="h_d1">Define complete</label><input id="h_d1" type="date"></div><div class="field"><label for="h_d2">Measure complete</label><input id="h_d2" type="date"></div><div class="field"><label for="h_d3">Analyze complete</label><input id="h_d3" type="date"></div><div class="field"><label for="h_d4">Improve complete</label><input id="h_d4" type="date"></div><div class="field"><label for="h_d5">Control complete</label><input id="h_d5" type="date"></div></div>
+<div class="acts"><button class="btn small" type="button" id="copyBtn">Copy charter</button></div>
+<div class="out" id="out" style="margin-top:16px"></div></div>
+<div class="acts" style="margin-top:20px"><button class="btn" id="resetBtn" type="button">Reset to example values</button></div>
+</section>
+<div class="pagefoot"><a href="../index.html">All calculators and tools</a><span>Worked examples are illustrative. Check your own data, standards and customer requirements before acting on a result.</span></div>
+</main></div>
+<script src="../assets/lib.js"></script>
+<script>
+
+var EX={h_title:'Reduce chipped carbide inserts at final inspection',h_prob:'4.8% of inserts from the hone cell were rejected for edge chipping in the last 26 weeks, about 11,500 pieces a year',h_metric:'Chipped inserts at final inspection',h_base:4.8,h_target:1.5,h_unit:'% of lot',h_due:'2027-05-21',h_in:'Hone, transfer and final inspection of ISO turning inserts',h_out:'Coating line, grinding, supplier changes',h_case:'Scrap and rework cost of about 9 lakh per year; protects delivery to key customers',h_spon:'Plant manager',h_lead:'Green Belt candidate',h_team:'Process engineer, hone supervisor, quality technician, maintenance',h_d1:'2026-12-04',h_d2:'2027-01-15',h_d3:'2027-02-26',h_d4:'2027-04-09',h_d5:'2027-05-21'};
+var IDS=Object.keys(EX);
+function g(i){return $('#'+i).value.trim();}
+function text(){
+  return ['PROJECT CHARTER: '+g('h_title'),'Problem: '+g('h_prob'),'Goal: move '+g('h_metric')+' from '+g('h_base')+' to '+g('h_target')+' '+g('h_unit')+' by '+g('h_due'),'In scope: '+g('h_in'),'Out of scope: '+g('h_out'),'Business case: '+g('h_case'),'Sponsor: '+g('h_spon')+' | Leader: '+g('h_lead'),'Team: '+g('h_team'),
+   'Milestones: Define '+g('h_d1')+', Measure '+g('h_d2')+', Analyze '+g('h_d3')+', Improve '+g('h_d4')+', Control '+g('h_d5')].join('\n');
+}
+function update(){
+  var b=val('h_base'),t=val('h_target'),checks=[],pr=g('h_prob');
+  function ck(ok,good,bad){checks.push([ok,ok?good:bad]);}
+  ck(pr&&/\d/.test(pr),'The problem statement contains a measured fact.','Problem statement needs a number (how big, how often, since when).');
+  ck(!/\b(should|need to|must|implement|install|buy|purchase|new system|training|retrain)\b/i.test(pr),'The problem statement leaves the solution open.','The problem statement sounds like a solution. Describe the gap, not the fix.');
+  ck(b===b&&t===t&&b!==t&&g('h_metric')&&g('h_unit'),'The goal has a metric, unit, baseline and target.','The goal needs a metric, unit, baseline and a target different from the baseline.');
+  if(b===b&&t===t&&b>0){var pct=Math.abs(b-t)/b*100;ck(pct>=20&&pct<=90,'The goal is a '+fmt(pct,0)+'% change: stretching but plausible.','The goal is a '+fmt(pct,0)+'% change. '+(pct<20?'That may be too small to justify a project.':'That is very ambitious; confirm the target is realistic.'));}
+  ck(!!g('h_due'),'The goal has a completion date.','Add a completion date.');
+  ck(g('h_out').length>2,'Out-of-scope items are named.','Name what is out of scope to prevent scope creep.');
+  ck(/\d/.test(g('h_case')),'The business case has a number.','The business case needs a number (cost, time, risk).');
+  ck(g('h_spon')&&g('h_lead'),'Sponsor and leader are named.','Name a sponsor and a project leader.');
+  var ds=['h_d1','h_d2','h_d3','h_d4','h_d5'].map(g),okd=ds.every(Boolean)&&ds.every(function(d,i){return i===0||d>=ds[i-1];})&&(!g('h_due')||ds[4]<=g('h_due'));
+  ck(okd,'Milestones run in order and end by the completion date.','Milestone dates are missing, out of order, or later than the completion date.');
+  var ok=checks.filter(function(c){return c[0];}).length;
+  $('#out').innerHTML='<div class="kpis">'+kpi('Checks passed',ok+' of '+checks.length,ok===checks.length?'good':ok>=checks.length-2?'warn':'bad')+'</div><ul class="plain" style="margin-top:10px">'+checks.map(function(c){return '<li>'+(c[0]?'✓ ':'✗ ')+esc(c[1])+'</li>';}).join('')+'</ul><div class="case" style="margin-top:12px"><h4>Charter preview</h4><pre style="white-space:pre-wrap;font-family:var(--font-mono);font-size:.82rem;margin:8px 0 0">'+esc(text())+'</pre></div>';
+}
+$('#copyBtn').addEventListener('click',function(){copyText(text(),this);});
+setupTool(EX,update);
+
+</script>
+</body>
+</html>

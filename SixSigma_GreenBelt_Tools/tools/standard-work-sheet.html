@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Standard Work Combination Sheet | Green Belt Toolkit</title>
+<meta name="description" content="Time each element of an operator’s work, compare the total with takt time and see how much of the cycle is working, walking and waiting on the machine.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@500;600;700&display=swap">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<header class="top"><div class="top-in"><a class="brand" href="../index.html"><i></i>Green Belt Toolkit</a><nav class="nav" aria-label="Sections"><a href="../index.html#calculators">Calculators</a><a href="../index.html#tools">Tools</a></nav><button class="icon-btn" id="themeBtn" type="button" aria-label="Switch colour theme">Theme</button></div></header>
+<div class="wrap"><main>
+<section style="padding-top:36px;display:flex;flex-direction:column;gap:10px"><span class="eyebrow">Tool · Improve phase</span><h1 style="font-size:clamp(1.8rem,4vw,2.6rem)">Standard Work Combination Sheet</h1><p class="lead">Time each element of an operator’s work, compare the total with takt time and see how much of the cycle is working, walking and waiting on the machine.</p></section>
+<section class="tool-page" style="margin-top:28px">
+<div id="tool"><p class="note" style="margin-bottom:12px">List the operator’s work elements in sequence with manual time, machine (automatic) time that runs on its own, and walking time. The operator’s cycle is manual plus walking. Example: one operator running the hone machine.</p><div class="fields" style="grid-template-columns:repeat(auto-fit,minmax(min(100%,180px),1fr));margin-bottom:14px"><div class="field"><label for="w_av">Available minutes per day</label><input id="w_av" type="number" step="any"></div><div class="field"><label for="w_dm">Customer demand per day</label><input id="w_dm" type="number" step="any"></div></div><div id="g"></div><div class="out" id="out" style="margin-top:16px"></div></div>
+<div class="acts" style="margin-top:20px"><button class="btn" id="resetBtn" type="button">Reset to example values</button></div>
+</section>
+<div class="pagefoot"><a href="../index.html">All calculators and tools</a><span>Worked examples are illustrative. Check your own data, standards and customer requirements before acting on a result.</span></div>
+</main></div>
+<script src="../assets/lib.js"></script>
+<script>
+
+var grid=gridTable({host:'g',extra:['Operator time'],
+ cols:[{k:'n',l:'Element',w:190},{k:'k',l:'Key points / safety',w:170},{k:'m',l:'Manual (s)',t:'num',min:0},{k:'a',l:'Auto (s)',t:'num',min:0},{k:'w',l:'Walk (s)',t:'num',min:0}],
+ example:[{n:'Take finished insert tray from machine',k:'Two hands, no stacking',m:12,a:0,w:3},{n:'Load next fixture',k:'Orientation mark up',m:25,a:0,w:2},{n:'Start cycle',k:'Check media level light',m:4,a:150,w:0},{n:'Wash previous batch',k:'Basket max 25',m:18,a:0,w:6},{n:'Inspect 5-piece sample',k:'20x loupe',m:40,a:0,w:5},{n:'Record on check sheet',k:'Same shift only',m:10,a:0,w:0}],
+ compute:function(rows){
+  var av=val('w_av'),dm=val('w_dm'),takt=av>0&&dm>0?av*60/dm:NaN,man=0,aut=0,wk=0;
+  var cells=rows.map(function(r){man+=nz(r.m);aut+=nz(r.a);wk+=nz(r.w);return [fmt(nz(r.m)+nz(r.w),0)+' s'];});
+  var op=man+wk,mc=aut+man,load=takt>0?op/takt*100:0,cyc=Math.max(op,mc);
+  return {cells:cells,out:'<div class="kpis">'+kpi('Takt time',takt>0?fmt(takt,0)+' s':'—')+kpi('Operator time',fmt(op,0)+' s')+kpi('Machine cycle',fmt(mc,0)+' s')+kpi('Operator loading',takt>0?fmt(load,0)+'%':'—',load>100?'bad':load>=85?'good':'warn')+'</div>'+(takt>0?hbars([{l:'Takt',v:takt},{l:'Operator (work + walk)',v:op,c:op>takt?'var(--bad)':'var(--good)'},{l:'Machine cycle',v:mc,c:mc>takt?'var(--bad)':'var(--accent)'}],function(v){return fmt(v,0)+' s';}):'')+
+   '<div class="verdict '+(load>100||mc>takt?'bad':'good')+'" style="margin-top:12px">'+(takt>0?(mc>takt?'The machine cycle ('+fmt(mc,0)+' s) is longer than takt, so one machine cannot meet demand. Add capacity or shorten the cycle.':load>100?'The operator cannot finish the work inside takt. Rebalance elements or add a person.':load<70?'The operator is loaded at '+fmt(load,0)+'% of takt. There is room to add machines or tasks, or combine jobs.':'The work fits inside takt with a sensible margin.'):'Enter available time and demand.')+' Walking is '+fmt(op?wk/op*100:0,0)+'% of operator time: tighten the layout if it is high.</div><p class="note">Write the final sequence as a standard work sheet with key points and safety notes, post it at the station and have the operators help set it. Update it whenever the best method changes.</p>'};
+ }});
+function upd(){grid.recompute();}
+setupTool({w_av:27000/60,w_dm:100},upd,function(){$('#w_av').value=450;$('#w_dm').value=100;grid.reset();});
+
+</script>
+</body>
+</html>

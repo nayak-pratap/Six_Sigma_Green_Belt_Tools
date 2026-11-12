@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Stakeholder Analysis Grid | Green Belt Toolkit</title>
+<meta name="description" content="Rate influence, interest and support for each stakeholder, see them on a power-interest grid and find the biggest support gaps.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@500;600;700&display=swap">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<header class="top"><div class="top-in"><a class="brand" href="../index.html"><i></i>Green Belt Toolkit</a><nav class="nav" aria-label="Sections"><a href="../index.html#calculators">Calculators</a><a href="../index.html#tools">Tools</a></nav><button class="icon-btn" id="themeBtn" type="button" aria-label="Switch colour theme">Theme</button></div></header>
+<div class="wrap"><main>
+<section style="padding-top:36px;display:flex;flex-direction:column;gap:10px"><span class="eyebrow">Tool · Define phase</span><h1 style="font-size:clamp(1.8rem,4vw,2.6rem)">Stakeholder Analysis Grid</h1><p class="lead">Rate influence, interest and support for each stakeholder, see them on a power-interest grid and find the biggest support gaps.</p></section>
+<section class="tool-page" style="margin-top:28px">
+<div id="tool"><p class="note" style="margin-bottom:12px">Influence and interest run from 1 (low) to 5 (high). Support runs from −2 (strongly against) to +2 (champion). Set where you need each person to be, and the gap shows where to spend your time. Example: a hone-cell improvement project.</p><div id="g"></div><div class="out" id="out" style="margin-top:16px"></div></div>
+<div class="acts" style="margin-top:20px"><button class="btn" id="resetBtn" type="button">Reset to example values</button></div>
+</section>
+<div class="pagefoot"><a href="../index.html">All calculators and tools</a><span>Worked examples are illustrative. Check your own data, standards and customer requirements before acting on a result.</span></div>
+</main></div>
+<script src="../assets/lib.js"></script>
+<script>
+
+var ST=[['-2','-2 Strongly against'],['-1','-1 Against'],['0','0 Neutral'],['1','+1 Supportive'],['2','+2 Champion']];
+var N5=[['1','1'],['2','2'],['3','3'],['4','4'],['5','5']];
+function quad(r){var hi=nz(r.inf)>3,ho=nz(r.int)>3;return hi&&ho?'Manage closely':hi?'Keep satisfied':ho?'Keep informed':'Monitor';}
+var grid=gridTable({host:'g',extra:['Strategy','Gap'],
+ cols:[{k:'n',l:'Stakeholder',w:140},{k:'inf',l:'Influence',t:'sel',o:N5},{k:'int',l:'Interest',t:'sel',o:N5},{k:'cur',l:'Support now',t:'sel',o:ST},{k:'tgt',l:'Support needed',t:'sel',o:ST}],
+ example:[{n:'Plant manager',inf:'5',int:'4',cur:'1',tgt:'2'},{n:'Hone supervisor',inf:'3',int:'5',cur:'-1',tgt:'1'},{n:'Quality manager',inf:'4',int:'5',cur:'2',tgt:'2'},{n:'Maintenance lead',inf:'2',int:'4',cur:'0',tgt:'1'},{n:'Finance controller',inf:'4',int:'2',cur:'0',tgt:'1'},{n:'Hone operators',inf:'2',int:'5',cur:'-1',tgt:'1'},{n:'Coating line lead',inf:'2',int:'2',cur:'0',tgt:'0'}],
+ compute:function(rows){
+  var W=420,H=340,f=frame(W,H,0.5,5.5,0.5,5.5,{ml:46,mb:44,xl:'Interest',yl:'Influence',xn:5}),s=f.base;
+  s+='<line x1="'+f.xs(3.5)+'" x2="'+f.xs(3.5)+'" y1="'+f.mt+'" y2="'+f.ys(0.5)+'" stroke-dasharray="4 4" style="stroke:var(--ink-2)"/><line x1="'+f.ml+'" x2="'+(W-f.mr)+'" y1="'+f.ys(3.5)+'" y2="'+f.ys(3.5)+'" stroke-dasharray="4 4" style="stroke:var(--ink-2)"/>';
+  var jit={};
+  var cells=rows.map(function(r,i){var gap=nz(r.tgt)-nz(r.cur),key=r.int+'_'+r.inf;jit[key]=(jit[key]||0)+1;var dx=(jit[key]-1)*14-0;
+   s+='<circle cx="'+(f.xs(nz(r.int))+dx)+'" cy="'+f.ys(nz(r.inf))+'" r="9" style="fill:'+(gap>=2?'var(--bad)':gap===1?'var(--warn)':'var(--accent)')+'"/><text x="'+(f.xs(nz(r.int))+dx)+'" y="'+(f.ys(nz(r.inf))+4)+'" text-anchor="middle" style="font:bold 10px var(--font-mono);fill:var(--accent-ink)">'+(i+1)+'</text>';
+   return [quad(r),gap>0?'<b style="color:var(--'+(gap>=2?'bad':'warn')+')">+'+gap+' to win</b>':'on track'];});
+  var need=rows.map(function(r,i){return {i:i,r:r,g:nz(r.tgt)-nz(r.cur),p:nz(r.inf)};}).filter(function(x){return x.g>0;}).sort(function(a,b){return b.g*b.p-a.g*a.p;});
+  return {cells:cells,out:'<div class="kpis">'+kpi('Stakeholders',rows.length)+kpi('Manage closely',rows.filter(function(r){return quad(r)==='Manage closely';}).length)+kpi('With a support gap',need.length,need.length?'warn':'good')+'</div>'+svgWrap(W,H,s,'Power-interest grid')+
+   '<p class="note">Numbers match the table rows. Red = gap of 2 or more, amber = gap of 1.</p>'+(need.length?'<div class="verdict warn"><b>Spend time here first (gap × influence):</b><ul class="plain">'+need.slice(0,4).map(function(x){return '<li>'+(x.i+1)+'. '+esc(x.r.n)+': from '+x.r.cur+' to '+x.r.tgt+'</li>';}).join('')+'</ul>Ask what they stand to gain or lose, and involve the sceptics early.</div>':'')};
+ }});
+setupTool({},function(){},function(){grid.reset();});
+
+</script>
+</body>
+</html>

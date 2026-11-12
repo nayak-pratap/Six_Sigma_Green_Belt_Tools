@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pilot and PDCA Decision Tool | Green Belt Toolkit</title>
+<meta name="description" content="Compare pilot results with the baseline, check them against the success criterion and get an adopt, adapt or abandon recommendation.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@500;600;700&display=swap">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<header class="top"><div class="top-in"><a class="brand" href="../index.html"><i></i>Green Belt Toolkit</a><nav class="nav" aria-label="Sections"><a href="../index.html#calculators">Calculators</a><a href="../index.html#tools">Tools</a></nav><button class="icon-btn" id="themeBtn" type="button" aria-label="Switch colour theme">Theme</button></div></header>
+<div class="wrap"><main>
+<section style="padding-top:36px;display:flex;flex-direction:column;gap:10px"><span class="eyebrow">Tool · Improve phase</span><h1 style="font-size:clamp(1.8rem,4vw,2.6rem)">Pilot and PDCA Decision Tool</h1><p class="lead">Compare pilot results with the baseline, check them against the success criterion and get an adopt, adapt or abandon recommendation.</p></section>
+<section class="tool-page" style="margin-top:28px">
+<div id="tool"><p class="note" style="margin-bottom:12px">Plan the pilot, run it small, then check the result with a proper test, not by eye. Example: a finer hone media tried on 8 lots. “Lower is better” here because the measure is a defect rate.</p><div class="fields" style="grid-template-columns:repeat(auto-fit,minmax(min(100%,200px),1fr))"><div class="field"><label for="k_obj">What is being piloted</label><input id="k_obj" type="text"></div><div class="field"><label for="k_met">Measure</label><input id="k_met" type="text"></div><div class="field"><label for="k_dir">Better means</label><select id="k_dir"><option value="low">Lower</option><option value="high">Higher</option></select></div><div class="field"><label for="k_tgt">Success criterion for the pilot mean</label><input id="k_tgt" type="number" step="any"></div><div class="field"><label for="k_bm">Baseline mean</label><input id="k_bm" type="number" step="any"></div><div class="field"><label for="k_bs">Baseline std dev</label><input id="k_bs" type="number" step="any" min="0"></div><div class="field"><label for="k_bn">Baseline n</label><input id="k_bn" type="number" step="any" min="2" step="1"></div><div class="field"><label for="k_pm">Pilot mean</label><input id="k_pm" type="number" step="any"></div><div class="field"><label for="k_ps">Pilot std dev</label><input id="k_ps" type="number" step="any" min="0"></div><div class="field"><label for="k_pn">Pilot n</label><input id="k_pn" type="number" step="any" min="2" step="1"></div></div><div class="out" id="out" style="margin-top:16px"></div></div>
+<div class="acts" style="margin-top:20px"><button class="btn" id="resetBtn" type="button">Reset to example values</button></div>
+</section>
+<div class="pagefoot"><a href="../index.html">All calculators and tools</a><span>Worked examples are illustrative. Check your own data, standards and customer requirements before acting on a result.</span></div>
+</main></div>
+<script src="../assets/lib.js"></script>
+<script>
+
+var EX={k_obj:'Finer hone media on the hone cell',k_met:'Chipped inserts, % of lot',k_dir:'low',k_tgt:2,k_bm:4.8,k_bs:0.85,k_bn:26,k_pm:1.3,k_ps:0.3,k_pn:8};
+function update(){
+  var bm=val('k_bm'),bs=val('k_bs'),bn=val('k_bn'),pm=val('k_pm'),ps=val('k_ps'),pn=val('k_pn'),tg=val('k_tgt'),low=$('#k_dir').value==='low';
+  if(!(bs>0&&ps>0&&bn>=2&&pn>=2&&bm===bm&&pm===pm)){$('#out').innerHTML='<p class="note">Enter positive standard deviations and at least 2 observations in each group.</p>';return;}
+  var w=welch(pm,ps,pn,bm,bs,bn),better=low?pm<bm:pm>bm,sig=w.p<0.05,meets=tg===tg?(low?pm<=tg:pm>=tg):true;
+  var d,cls,why;
+  if(better&&sig&&meets){d='ADOPT';cls='good';why='The pilot improved on the baseline, the difference is statistically significant and it meets the success criterion.';}
+  else if(better&&sig){d='ADAPT';cls='warn';why='The pilot improved on the baseline but missed the success criterion. Adjust the solution (settings, scope, a second factor) and pilot again.';}
+  else if(better){d='ADAPT';cls='warn';why='The pilot looks better, but the difference could be chance with this much data. Extend the pilot or reduce the noise before deciding.';}
+  else{d='ABANDON';cls='bad';why='The pilot was not better than the baseline. Go back to the root-cause analysis; the solution may address the wrong cause.';}
+  $('#out').innerHTML='<div class="kpis">'+kpi('Decision',d,cls)+kpi('Change',fmt(pm-bm,3))+kpi('p-value',w.p<0.0001?'< 0.0001':fmt(w.p,4),sig?'good':'warn')+kpi('95% CI of change',fmt(w.lo,2)+' to '+fmt(w.hi,2))+'</div><div class="verdict '+cls+'" style="margin-top:12px">'+why+'</div>'+
+   '<div class="grid g2" style="margin-top:14px"><div class="case"><h4>Plan</h4><p>Pilot: '+esc($('#k_obj').value)+'. Measure: '+esc($('#k_met').value)+'. Success if the pilot mean is '+(low?'at or below ':'at or above ')+fmt(tg,2)+'.</p></div><div class="case"><h4>Do</h4><p>'+pn+' pilot observations. Keep everything else the same and record anything unusual.</p></div><div class="case"><h4>Check</h4><p>Mean '+fmt(pm,2)+' vs baseline '+fmt(bm,2)+', p = '+(w.p<0.0001?'< 0.0001':fmt(w.p,4))+'.</p></div><div class="case"><h4>Act</h4><p>'+d+'. '+(d==='ADOPT'?'Standardise it and move to the control plan.':d==='ADAPT'?'Revise and run the next cycle.':'Return to Analyze.')+'</p></div></div><p class="note">Pilot in the real process with real operators, and compare with data from the same period if you can. A pilot that only works under special attention will not hold up at full scale.</p>';
+}
+setupTool(EX,update);
+
+</script>
+</body>
+</html>

@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Box Plot and One-Way ANOVA | Green Belt Toolkit</title>
+<meta name="description" content="Compare groups side by side with box plots and individual points, and test whether the group means differ.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@500;600;700&display=swap">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<header class="top"><div class="top-in"><a class="brand" href="../index.html"><i></i>Green Belt Toolkit</a><nav class="nav" aria-label="Sections"><a href="../index.html#calculators">Calculators</a><a href="../index.html#tools">Tools</a></nav><button class="icon-btn" id="themeBtn" type="button" aria-label="Switch colour theme">Theme</button></div></header>
+<div class="wrap"><main>
+<section style="padding-top:36px;display:flex;flex-direction:column;gap:10px"><span class="eyebrow">Tool · Analyze phase</span><h1 style="font-size:clamp(1.8rem,4vw,2.6rem)">Box Plot and One-Way ANOVA</h1><p class="lead">Compare groups side by side with box plots and individual points, and test whether the group means differ.</p></section>
+<section class="tool-page" style="margin-top:28px">
+<div class="calc" id="tool"><div><div class="fields"><div class="field" style="grid-column:1/-1"><label for="b_data">Group: values</label><textarea id="b_data" rows="8" spellcheck="false"></textarea></div></div><p class="note" style="margin-top:12px">One group per line: a name, a colon, then the values. Use this for the “where does the variation come from” look: by shift, machine, operator or supplier lot. Example: chip rate (%) by shift, 8 lots each.</p></div><div class="out" id="out"></div></div>
+<div class="acts" style="margin-top:20px"><button class="btn" id="resetBtn" type="button">Reset to example values</button></div>
+</section>
+<div class="pagefoot"><a href="../index.html">All calculators and tools</a><span>Worked examples are illustrative. Check your own data, standards and customer requirements before acting on a result.</span></div>
+</main></div>
+<script src="../assets/lib.js"></script>
+<script>
+
+var EXTXT="Shift 1: 4.1 4.8 4.4 5.0 4.6 4.3 4.9 4.5\nShift 2: 4.6 5.2 4.8 5.5 5.1 4.7 5.3 4.9\nShift 3: 7.1 6.4 7.8 6.9 7.5 8.1 6.7 7.3";
+function update(){
+  var G=[];$('#b_data').value.split(/\n/).forEach(function(l){var i=l.indexOf(':');if(i<0)return;var v=parseNums(l.slice(i+1));if(v.length>=2)G.push({n:l.slice(0,i).trim()||'Group',v:v});});
+  if(G.length<2){$('#out').innerHTML='<p class="note">Enter at least two groups, each with two or more values, like “Shift 1: 4.1 4.8 4.4”.</p>';return;}
+  var all=[];G.forEach(function(g){all=all.concat(g.v);});
+  var gm=mean(all),N=all.length,k=G.length,ssb=0,ssw=0;
+  G.forEach(function(g){g.m=mean(g.v);g.s=sdev(g.v);var so=g.v.slice().sort(function(a,b){return a-b;});g.q1=quant(so,.25);g.md=quant(so,.5);g.q3=quant(so,.75);var iq=g.q3-g.q1;g.lo=so.filter(function(v){return v>=g.q1-1.5*iq;})[0];g.hi=so.filter(function(v){return v<=g.q3+1.5*iq;}).pop();ssb+=g.v.length*Math.pow(g.m-gm,2);g.v.forEach(function(v){ssw+=Math.pow(v-g.m,2);});});
+  var d1=k-1,d2=N-k,F=d2>0&&ssw>0?(ssb/d1)/(ssw/d2):Infinity,p=isFinite(F)?betai(d2/2,d1/2,d2/(d2+d1*F)):0,sig=p<0.05;
+  var W=640,H=300,mn=Math.min.apply(null,all),mx=Math.max.apply(null,all),pd=(mx-mn)*0.1||1,f=frame(W,H,0,k,mn-pd,mx+pd,{xticks:false,yl:'Value',mb:48}),sv=f.base,bw=(f.xs(1)-f.xs(0))*0.28;
+  G.forEach(function(g,i){var cx=f.xs(i+0.5);
+   sv+='<line x1="'+cx+'" x2="'+cx+'" y1="'+f.ys(g.lo)+'" y2="'+f.ys(g.hi)+'" style="stroke:var(--ink)"/><rect x="'+(cx-bw)+'" y="'+f.ys(g.q3)+'" width="'+bw*2+'" height="'+Math.max(1,f.ys(g.q1)-f.ys(g.q3))+'" style="fill:var(--accent-soft);stroke:var(--accent)" stroke-width="1.5"/><line x1="'+(cx-bw)+'" x2="'+(cx+bw)+'" y1="'+f.ys(g.md)+'" y2="'+f.ys(g.md)+'" stroke-width="2.5" style="stroke:var(--accent)"/>';
+   g.v.forEach(function(v,j){var jx=cx+((j%5)-2)*bw*0.35;sv+='<circle cx="'+jx+'" cy="'+f.ys(v)+'" r="2.5" style="fill:'+(v<g.lo||v>g.hi?'var(--bad)':'var(--ink-2)')+'" opacity="0.8"/>';});
+   sv+='<path d="M'+cx+' '+(f.ys(g.m)-5)+'l5 5l-5 5l-5 -5z" style="fill:var(--ink)"/><text x="'+cx+'" y="'+(f.H-f.mb+18)+'" text-anchor="middle" '+f.t+'>'+esc(g.n.slice(0,14))+'</text>';});
+  $('#out').innerHTML=svgWrap(W,H,sv,'Box plots by group')+'<p class="note">Box = middle 50%, line = median, diamond = mean, whiskers reach the furthest point within 1.5 × IQR, red points are outliers.</p><div class="tbl-wrap"><table><thead><tr><th>Group</th><th class="num">n</th><th class="num">Mean</th><th class="num">Std dev</th><th class="num">Median</th></tr></thead><tbody>'+G.map(function(g){return '<tr><td>'+esc(g.n)+'</td><td class="num">'+g.v.length+'</td><td class="num">'+fmt(g.m,3)+'</td><td class="num">'+fmt(g.s,3)+'</td><td class="num">'+fmt(g.md,3)+'</td></tr>';}).join('')+'</tbody></table></div>'+
+   '<div class="kpis" style="margin-top:12px">'+kpi('F',isFinite(F)?fmt(F,2):'—')+kpi('df',d1+', '+d2)+kpi('p-value',p<0.0001?'< 0.0001':fmt(p,4),sig?'good':'warn')+'</div><div class="verdict '+(sig?'good':'warn')+'" style="margin-top:12px">'+(sig?'At least one group mean differs (p < 0.05). ANOVA does not say which; compare the boxes, then follow up with pairwise comparisons such as Tukey.':'No evidence that the group means differ at the 5% level.')+'</div><p class="note">Assumes roughly normal data, similar spread in each group and independent observations. If the groups have very different spreads, treat the p-value with caution.</p>';
+}
+setupTool({b_data:EXTXT},update);
+
+</script>
+</body>
+</html>

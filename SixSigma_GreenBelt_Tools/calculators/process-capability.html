@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Process Capability Calculator (Cp, Cpk) | Green Belt Toolkit</title>
+<meta name="description" content="Compare your process spread and centring with the specification limits and estimate parts per million out of spec.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@500;600;700&display=swap">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<header class="top"><div class="top-in"><a class="brand" href="../index.html"><i></i>Green Belt Toolkit</a><nav class="nav" aria-label="Sections"><a href="../index.html#calculators">Calculators</a><a href="../index.html#tools">Tools</a></nav><button class="icon-btn" id="themeBtn" type="button" aria-label="Switch colour theme">Theme</button></div></header>
+<div class="wrap"><main>
+<section style="padding-top:36px;display:flex;flex-direction:column;gap:10px"><span class="eyebrow">Calculator · Measure phase</span><h1 style="font-size:clamp(1.8rem,4vw,2.6rem)">Process Capability Calculator (Cp, Cpk)</h1><p class="lead">Compare your process spread and centring with the specification limits and estimate parts per million out of spec.</p></section>
+<section class="tool-page" style="margin-top:28px">
+<div class="calc" id="tool"><div><div class="fields"><div class="field"><label for="c_usl">Upper spec limit (USL)</label><input id="c_usl" type="number" step="any"></div><div class="field"><label for="c_lsl">Lower spec limit (LSL)</label><input id="c_lsl" type="number" step="any"></div><div class="field"><label for="c_mean">Process mean</label><input id="c_mean" type="number" step="any"></div><div class="field"><label for="c_sd">Standard deviation</label><input id="c_sd" type="number" step="any" min="0"></div></div><p class="note" style="margin-top:12px">Cp = (USL − LSL) ÷ 6σ. Cpk = min[(USL − mean) ÷ 3σ, (mean − LSL) ÷ 3σ]. Use the within-subgroup σ for Cp and Cpk and the overall σ for Pp and Ppk. Valid only for a stable, roughly normal process. Example: a bore of 10.0 mm ± 0.6 running slightly off-centre.</p></div><div class="out" id="out"></div></div>
+<div class="acts" style="margin-top:20px"><button class="btn" id="resetBtn" type="button">Reset to example values</button></div>
+</section>
+<div class="pagefoot"><a href="../index.html">All calculators and tools</a><span>Worked examples are illustrative. Check your own data, standards and customer requirements before acting on a result.</span></div>
+</main></div>
+<script src="../assets/lib.js"></script>
+<script>
+
+function capSvg(usl,lsl,mean,sd){
+  var W=420,H=170,ml=10,mr=10,mt=14,mb=28;
+  var lo=Math.min(lsl,mean-4*sd),hi=Math.max(usl,mean+4*sd),pad=(hi-lo)*0.04;lo-=pad;hi+=pad;
+  function xs(x){return ml+(x-lo)/(hi-lo)*(W-ml-mr);}
+  var pk=1/(sd*Math.sqrt(2*Math.PI));
+  function ys(v){return H-mb-v/pk*(H-mb-mt);}
+  function pdf(x){return Math.exp(-0.5*Math.pow((x-mean)/sd,2))*pk;}
+  var n=160,i,x,line='',tl='',th='';
+  for(i=0;i<=n;i++){x=lo+(hi-lo)*i/n;line+=(i?'L':'M')+xs(x).toFixed(1)+' '+ys(pdf(x)).toFixed(1);}
+  function tail(a,b){var s='M'+xs(a).toFixed(1)+' '+ys(0).toFixed(1);for(var k=0;k<=40;k++){var xx=a+(b-a)*k/40;s+='L'+xs(xx).toFixed(1)+' '+ys(pdf(xx)).toFixed(1);}return s+'L'+xs(b).toFixed(1)+' '+ys(0).toFixed(1)+'Z';}
+  if(lsl>lo)tl=tail(lo,lsl); if(usl<hi)th=tail(usl,hi);
+  var t='style="font:10px var(--font-mono);fill:var(--ink-2)"';
+  var s='<line x1="'+ml+'" x2="'+(W-mr)+'" y1="'+ys(0)+'" y2="'+ys(0)+'" style="stroke:var(--line)"/>';
+  s+='<path d="'+tl+'" style="fill:var(--bad)" opacity="0.35"/><path d="'+th+'" style="fill:var(--bad)" opacity="0.35"/>';
+  s+='<path d="'+line+'" fill="none" stroke-width="2" style="stroke:var(--accent)"/>';
+  [[lsl,'LSL'],[usl,'USL']].forEach(function(a){s+='<line x1="'+xs(a[0])+'" x2="'+xs(a[0])+'" y1="'+mt+'" y2="'+ys(0)+'" stroke-dasharray="4 3" style="stroke:var(--ink)"/><text x="'+xs(a[0])+'" y="'+(H-12)+'" text-anchor="middle" '+t+'>'+a[1]+' '+fmt(a[0],2)+'</text>';});
+  s+='<line x1="'+xs(mean)+'" x2="'+xs(mean)+'" y1="'+(mt+6)+'" y2="'+ys(0)+'" style="stroke:var(--accent)" opacity="0.5"/>';
+  return svgWrap(W,H,s,'Process distribution against specification limits');
+}
+function update(){
+  var usl=val('c_usl'),lsl=val('c_lsl'),mean=val('c_mean'),sd=val('c_sd');
+  if(!(sd>0&&usl>lsl&&mean===mean)){$('#out').innerHTML='<p class="note">Enter USL greater than LSL and a positive standard deviation.</p>';return;}
+  var c=capability(usl,lsl,mean,sd), cl=c.cpk>=1.33?'good':c.cpk>=1?'warn':'bad';
+  var msg=c.cpk<1?'Not capable: the process produces out-of-spec parts.':c.cpk<1.33?'Marginal. Many customers require at least 1.33.':c.cpk<1.67?'Capable by the common 1.33 threshold.':'Highly capable by the common 1.67 threshold used for critical characteristics.';
+  if(c.cp-c.cpk>0.25)msg+=' Cp is well above Cpk, so re-centring the mean is the cheapest gain.';
+  $('#out').innerHTML='<div class="kpis">'+kpi('Cp',fmt(c.cp))+kpi('Cpk',fmt(c.cpk),cl)+kpi('Expected PPM out of spec',c.ppm<0.01?'< 0.01':fmt(c.ppm,c.ppm<100?2:0))+'</div>'+capSvg(usl,lsl,mean,sd)+'<div class="verdict '+cl+'">'+msg+'</div><p class="note">Red areas show the share outside the limits. Thresholds are common guidance; your customer may set its own.</p>';
+}
+setupTool({c_usl:10.6,c_lsl:9.4,c_mean:10.1,c_sd:0.1},update);
+
+</script>
+</body>
+</html>

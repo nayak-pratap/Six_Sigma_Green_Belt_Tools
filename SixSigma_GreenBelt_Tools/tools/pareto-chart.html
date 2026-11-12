@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pareto Chart Builder | Green Belt Toolkit</title>
+<meta name="description" content="Paste categories and counts, get a sorted Pareto chart with the cumulative line and the vital few.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@500;600;700&display=swap">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<header class="top"><div class="top-in"><a class="brand" href="../index.html"><i></i>Green Belt Toolkit</a><nav class="nav" aria-label="Sections"><a href="../index.html#calculators">Calculators</a><a href="../index.html#tools">Tools</a></nav><button class="icon-btn" id="themeBtn" type="button" aria-label="Switch colour theme">Theme</button></div></header>
+<div class="wrap"><main>
+<section style="padding-top:36px;display:flex;flex-direction:column;gap:10px"><span class="eyebrow">Tool · Measure phase</span><h1 style="font-size:clamp(1.8rem,4vw,2.6rem)">Pareto Chart Builder</h1><p class="lead">Paste categories and counts, get a sorted Pareto chart with the cumulative line and the vital few.</p></section>
+<section class="tool-page" style="margin-top:28px">
+<div class="calc" id="tool"><div><div class="fields"><div class="field" style="grid-column:1/-1"><label for="p_data">Category, count</label><textarea id="p_data" rows="9" spellcheck="false"></textarea></div><div class="field"><label for="p_cut">Vital-few cut-off (cumulative %)</label><input id="p_cut" type="number" step="any" min="1" max="100"></div><div class="field"><label for="p_sort">Sort largest first</label><select id="p_sort"><option value="1">Yes</option><option value="0">No, keep my order</option></select></div></div><p class="note" style="margin-top:12px">One category per line, then a comma and the count. Example: reasons inserts were scrapped in one month.</p></div><div class="out" id="out"></div></div>
+<div class="acts" style="margin-top:20px"><button class="btn" id="resetBtn" type="button">Reset to example values</button></div>
+</section>
+<div class="pagefoot"><a href="../index.html">All calculators and tools</a><span>Worked examples are illustrative. Check your own data, standards and customer requirements before acting on a result.</span></div>
+</main></div>
+<script src="../assets/lib.js"></script>
+<script>
+
+var EXTXT="Edge chipping at hone, 38\nHandling damage, 22\nCoating spall, 14\nGrinding burn, 9\nWrong grade, 6\nPackaging, 4\nOther, 3";
+function update(){
+  var rows=[],bad=0;
+  $('#p_data').value.split(/\n/).forEach(function(l){l=l.trim();if(!l)return;var i=l.lastIndexOf(',');var lab,n;
+    if(i<0){var m=l.match(/^(.*\S)\s+(-?[\d.]+)$/);if(!m){bad++;return;}lab=m[1];n=parseFloat(m[2]);}else{lab=l.slice(0,i).trim();n=parseFloat(l.slice(i+1));}
+    if(!(n>=0)||!lab){bad++;return;} rows.push([lab,n]);});
+  var cut=val('p_cut'); if(!(cut>0&&cut<=100))cut=80;
+  if(rows.length<2){$('#out').innerHTML='<p class="note">Enter at least two categories, one per line, like “Edge chipping, 38”.</p>';return;}
+  if($('#p_sort').value==='1')rows.sort(function(a,b){return b[1]-a[1];});
+  var total=rows.reduce(function(a,r){return a+r[1];},0);
+  if(!(total>0)){$('#out').innerHTML='<p class="note">All counts are zero.</p>';return;}
+  var cum=0,vital=0,reached=false; var data=rows.map(function(r){cum+=r[1];var c=cum/total*100;var inV=!reached;if(c>=cut-1e-9)reached=true;if(inV)vital++;return {l:r[0],n:r[1],p:r[1]/total*100,c:c,v:inV};});
+  var W=640,H=330,f=frame(W,H,0,rows.length,0,total,{ml:52,mr:46,mb:78,xticks:false,yl:'Count'});
+  var s=f.base, t=f.t, bw=(f.xs(1)-f.xs(0))*0.7;
+  [0,20,40,60,80,100].forEach(function(p){s+='<text x="'+(W-f.mr+6)+'" y="'+(f.ys(total*p/100)+4)+'" '+t+'>'+p+'%</text>';});
+  data.forEach(function(d,i){var cx=f.xs(i+0.5);
+    s+='<rect x="'+(cx-bw/2)+'" y="'+f.ys(d.n)+'" width="'+bw+'" height="'+(f.ys(0)-f.ys(d.n))+'" style="fill:'+(d.v?'var(--accent)':'var(--ink-2)')+'" opacity="'+(d.v?1:0.5)+'"/>';
+    var lab=d.l.length>16?d.l.slice(0,15)+'…':d.l;
+    s+='<text transform="translate('+cx+' '+(f.ys(0)+10)+') rotate(-35)" text-anchor="end" '+t+'>'+esc(lab)+'</text>';});
+  s+='<line x1="'+f.ml+'" x2="'+(W-f.mr)+'" y1="'+f.ys(total*cut/100)+'" y2="'+f.ys(total*cut/100)+'" stroke-dasharray="4 4" style="stroke:var(--warn)"/>';
+  s+='<polyline fill="none" stroke-width="2" style="stroke:var(--ink)" points="'+f.xs(0)+','+f.ys(0)+' '+data.map(function(d,i){return f.xs(i+0.5)+','+f.ys(total*d.c/100);}).join(' ')+'"/>';
+  data.forEach(function(d,i){s+='<circle cx="'+f.xs(i+0.5)+'" cy="'+f.ys(total*d.c/100)+'" r="3" style="fill:var(--ink)"/>';});
+  var share=data[vital-1].c;
+  $('#out').innerHTML='<div class="kpis">'+kpi('Total',total)+kpi('Categories',rows.length)+kpi('Vital few',vital+' of '+rows.length,'good')+kpi('Share of total',fmt(share,1)+'%')+'</div>'+svgWrap(W,H,s,'Pareto chart')+
+   '<div class="verdict good">Focus first on: <b>'+data.slice(0,vital).map(function(d){return esc(d.l);}).join(', ')+'</b>. Together they make '+fmt(share,1)+'% of the total.</div>'+
+   '<div class="tbl-wrap"><table><thead><tr><th>Category</th><th class="num">Count</th><th class="num">%</th><th class="num">Cumulative %</th></tr></thead><tbody>'+data.map(function(d){return '<tr><td>'+esc(d.l)+'</td><td class="num">'+d.n+'</td><td class="num">'+fmt(d.p,1)+'</td><td class="num">'+fmt(d.c,1)+'</td></tr>';}).join('')+'</tbody></table></div>'+
+   (bad?'<p class="note">'+bad+' line(s) could not be read and were skipped.</p>':'')+'<p class="note">Counts show frequency. If the categories differ in cost, rebuild the chart with cost as the measure; the biggest count is not always the biggest loss.</p>';
+}
+setupTool({p_data:EXTXT,p_cut:80,p_sort:'1'},update);
+
+</script>
+</body>
+</html>

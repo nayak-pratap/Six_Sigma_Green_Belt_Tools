@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Brainstorming, Affinity Grouping and Multivoting | Green Belt Toolkit</title>
+<meta name="description" content="Capture ideas, group them under themes, record votes and see which themes the team rates highest.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@500;600;700&display=swap">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<header class="top"><div class="top-in"><a class="brand" href="../index.html"><i></i>Green Belt Toolkit</a><nav class="nav" aria-label="Sections"><a href="../index.html#calculators">Calculators</a><a href="../index.html#tools">Tools</a></nav><button class="icon-btn" id="themeBtn" type="button" aria-label="Switch colour theme">Theme</button></div></header>
+<div class="wrap"><main>
+<section style="padding-top:36px;display:flex;flex-direction:column;gap:10px"><span class="eyebrow">Tool · Analyze phase</span><h1 style="font-size:clamp(1.8rem,4vw,2.6rem)">Brainstorming, Affinity Grouping and Multivoting</h1><p class="lead">Capture ideas, group them under themes, record votes and see which themes the team rates highest.</p></section>
+<section class="tool-page" style="margin-top:28px">
+<div id="tool"><p class="note" style="margin-bottom:12px">Record one idea per row, give it a theme to group similar ideas, and enter the votes it received (for example each person gets 5 dots). Themes are ranked by total votes. Example: causes of chipped inserts after a team brainstorm.</p><div id="g"></div><div class="out" id="out" style="margin-top:16px"></div></div>
+<div class="acts" style="margin-top:20px"><button class="btn" id="resetBtn" type="button">Reset to example values</button></div>
+</section>
+<div class="pagefoot"><a href="../index.html">All calculators and tools</a><span>Worked examples are illustrative. Check your own data, standards and customer requirements before acting on a result.</span></div>
+</main></div>
+<script src="../assets/lib.js"></script>
+<script>
+
+var grid=gridTable({host:'g',cols:[{k:'i',l:'Idea',w:250},{k:'t',l:'Theme',w:130},{k:'v',l:'Votes',t:'num',min:0}],
+ example:[{i:'Inserts bump each other in the tray',t:'Handling',v:7},{i:'No separators in transfer tray',t:'Handling',v:5},{i:'Operators stack trays too high',t:'Handling',v:2},{i:'Hone brush wear not tracked',t:'Hone process',v:4},{i:'Media changed without checking grade',t:'Hone process',v:3},{i:'Hone time set by feel',t:'Hone process',v:2},{i:'Some blanks arrive with micro-cracks',t:'Material',v:3},{i:'Sintering lot variation',t:'Material',v:1},{i:'Final inspection light is poor',t:'Inspection',v:1},{i:'Loupe magnification not standard',t:'Inspection',v:0},{i:'No time to check each tray',t:'People',v:1},{i:'New operator not trained on handling',t:'People',v:2}],
+ compute:function(rows){
+  var th={},un=0,tv=0;rows.forEach(function(r){var t=String(r.t).trim();if(!t){un++;return;}th[t]=th[t]||{n:0,v:0,ideas:[]};th[t].n++;th[t].v+=nz(r.v);th[t].ideas.push(r);tv+=nz(r.v);});
+  var L=Object.keys(th).map(function(k){return {k:k,n:th[k].n,v:th[k].v,ideas:th[k].ideas};}).sort(function(a,b){return b.v-a.v;});
+  if(!L.length)return {out:'<p class="note">Give your ideas themes to group them.</p>'};
+  return {out:'<div class="kpis">'+kpi('Ideas',rows.length)+kpi('Themes',L.length)+kpi('Votes cast',tv)+kpi('Not yet grouped',un,un?'warn':'good')+'</div><h4 style="margin:14px 0 6px">Votes by theme</h4>'+hbars(L.map(function(x){return {l:x.k+' ('+x.n+' ideas)',v:x.v};}),function(v){return v;})+
+   '<div class="verdict good" style="margin-top:12px"><b>Top theme: '+esc(L[0].k)+'</b> with '+L[0].v+' of '+tv+' votes. Top ideas: '+L[0].ideas.slice().sort(function(a,b){return nz(b.v)-nz(a.v);}).slice(0,2).map(function(i){return esc(i.i);}).join('; ')+'.</div><p class="note">Votes show where the team’s belief sits, not where the data points. Treat the top themes as hypotheses and test them with data in the Analyze phase.</p>'};
+ }});
+setupTool({},function(){},function(){grid.reset();});
+
+</script>
+</body>
+</html>

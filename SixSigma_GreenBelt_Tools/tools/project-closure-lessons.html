@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Project Closure and Lessons Learned | Green Belt Toolkit</title>
+<meta name="description" content="Compare results with the goal, check the handover checklist and record lessons learned, then copy a closure summary.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@500;600;700&display=swap">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<header class="top"><div class="top-in"><a class="brand" href="../index.html"><i></i>Green Belt Toolkit</a><nav class="nav" aria-label="Sections"><a href="../index.html#calculators">Calculators</a><a href="../index.html#tools">Tools</a></nav><button class="icon-btn" id="themeBtn" type="button" aria-label="Switch colour theme">Theme</button></div></header>
+<div class="wrap"><main>
+<section style="padding-top:36px;display:flex;flex-direction:column;gap:10px"><span class="eyebrow">Tool · Control phase</span><h1 style="font-size:clamp(1.8rem,4vw,2.6rem)">Project Closure and Lessons Learned</h1><p class="lead">Compare results with the goal, check the handover checklist and record lessons learned, then copy a closure summary.</p></section>
+<section class="tool-page" style="margin-top:28px">
+<div id="tool"><p class="note" style="margin-bottom:12px">Close the project only when the gain has held and the process owner has taken over. Fill in the result, tick the handover items and capture lessons while they are fresh. Example: the chipped-insert project at hand-over.</p>
+<div class="fields" style="grid-template-columns:repeat(auto-fit,minmax(min(100%,200px),1fr))"><div class="field"><label for="l_title">Project</label><input id="l_title" type="text"></div><div class="field"><label for="l_met">Metric and unit</label><input id="l_met" type="text"></div><div class="field"><label for="l_base">Baseline</label><input id="l_base" type="number" step="any"></div><div class="field"><label for="l_tgt">Target</label><input id="l_tgt" type="number" step="any"></div><div class="field"><label for="l_act">Actual (latest)</label><input id="l_act" type="number" step="any"></div><div class="field"><label for="l_mon">Months the gain has held</label><input id="l_mon" type="number" step="any" min="0"></div></div>
+<h4 style="margin:16px 0 8px">Handover checklist</h4><div id="chk"></div>
+<h4 style="margin:16px 0 8px">Lessons learned</h4><div id="g"></div>
+<div class="acts"><button class="btn small" type="button" id="copyBtn">Copy closure summary</button></div>
+<div class="out" id="out" style="margin-top:16px"></div></div>
+<div class="acts" style="margin-top:20px"><button class="btn" id="resetBtn" type="button">Reset to example values</button></div>
+</section>
+<div class="pagefoot"><a href="../index.html">All calculators and tools</a><span>Worked examples are illustrative. Check your own data, standards and customer requirements before acting on a result.</span></div>
+</main></div>
+<script src="../assets/lib.js"></script>
+<script>
+
+var EX={l_title:'Reduce chipped carbide inserts',l_met:'Chipped inserts, % of lot',l_base:4.8,l_tgt:1.5,l_act:1.2,l_mon:3};
+var CK=['Control plan and reaction plan handed to the process owner','Work instructions and training records updated','Control chart is running and reviewed on a schedule','Financial benefit confirmed with finance','Process owner has signed off','Documentation filed where others can find it','Lessons shared with other teams'];
+var chk=[true,true,true,false,true,false,false];
+function drawChk(){$('#chk').innerHTML='<ul class="checks">'+CK.map(function(t,i){return '<li><label><input type="checkbox" data-i="'+i+'"'+(chk[i]?' checked':'')+'><span>'+esc(t)+'</span></label></li>';}).join('')+'</ul>';}
+var grid=gridTable({host:'g',out:'none',cols:[{k:'c',l:'Type',t:'sel',o:['Went well','Went badly','Do differently']},{k:'t',l:'Lesson',w:300},{k:'o',l:'Owner',w:100}],
+ example:[{c:'Went well',t:'Gage R&R first: found the measurement problem before wasting weeks on analysis',o:'Project lead'},{c:'Went well',t:'Operators on the team found the tray problem in one day',o:'Supervisor'},{c:'Went badly',t:'Baseline data collected late, which delayed Analyze by two weeks',o:'Project lead'},{c:'Do differently',t:'Agree the control plan owner at the start, not at the end',o:'Sponsor'}],
+ compute:function(rows){return {};}});
+function g(i){return $('#'+i).value.trim();}
+function text(){var b=val('l_base'),t=val('l_tgt'),a=val('l_act');return ['PROJECT CLOSURE: '+g('l_title'),'Metric: '+g('l_met'),'Baseline '+b+' | Target '+t+' | Actual '+a+' | Held '+g('l_mon')+' months','Handover: '+chk.filter(Boolean).length+' of '+CK.length+' items done','Lessons:'].concat(grid.rows().map(function(r){return '- ['+r.c+'] '+r.t+' ('+r.o+')';})).join('\n');}
+function update(){
+  var b=val('l_base'),t=val('l_tgt'),a=val('l_act'),m=val('l_mon');
+  if(!(b===b&&t===t&&a===a&&b!==t)){$('#out').innerHTML='<p class="note">Enter a baseline, a target different from the baseline, and an actual value.</p>';return;}
+  var ach=(b-a)/(b-t)*100,done=chk.filter(Boolean).length,rdy=done/CK.length,cls=ach>=100?'good':ach>=70?'warn':'bad',sust=m>=3;
+  var open=CK.filter(function(x,i){return !chk[i];});
+  $('#out').innerHTML='<div class="kpis">'+kpi('Goal achieved',fmt(ach,0)+'%',cls)+kpi('Change vs baseline',fmt((a-b)/b*100,0)+'%')+kpi('Gain held',m+' months',sust?'good':'warn')+kpi('Handover',done+' of '+CK.length,rdy===1?'good':'warn')+'</div>'+
+   '<div class="verdict '+(cls==='good'&&sust&&rdy===1?'good':'warn')+'" style="margin-top:12px">'+(cls==='good'&&sust&&rdy===1?'Ready to close: the goal is met, the gain has held and the process owner has everything.':'Not ready to close. '+(ach<100?'The goal is '+fmt(ach,0)+'% achieved. ':'')+(!sust?'Wait until the gain has held for at least three months. ':'')+(open.length?'Open handover items: '+open.slice(0,3).map(function(x){return esc(x.toLowerCase());}).join('; ')+'.':''))+'</div><p class="note">Closing early is the most common way for gains to disappear. Keep the control chart visible for months after closure, and re-open the project if it signals.</p>';
+}
+document.getElementById('tool').addEventListener('change',function(e){var c=e.target.closest('input[data-i]');if(c){chk[+c.getAttribute('data-i')]=c.checked;update();}});
+$('#copyBtn').addEventListener('click',function(){copyText(text(),this);});
+setupTool(EX,function(){update();grid.recompute();},function(){Object.keys(EX).forEach(function(k){$('#'+k).value=EX[k];});chk=[true,true,true,false,true,false,false];drawChk();grid.reset();});
+
+</script>
+</body>
+</html>

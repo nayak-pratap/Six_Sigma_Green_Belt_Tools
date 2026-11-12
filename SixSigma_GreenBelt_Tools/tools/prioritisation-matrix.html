@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Weighted Prioritisation Matrix | Green Belt Toolkit</title>
+<meta name="description" content="Weight your criteria, score each option from 1 to 5, and rank the options by weighted score.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@500;600;700&display=swap">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<header class="top"><div class="top-in"><a class="brand" href="../index.html"><i></i>Green Belt Toolkit</a><nav class="nav" aria-label="Sections"><a href="../index.html#calculators">Calculators</a><a href="../index.html#tools">Tools</a></nav><button class="icon-btn" id="themeBtn" type="button" aria-label="Switch colour theme">Theme</button></div></header>
+<div class="wrap"><main>
+<section style="padding-top:36px;display:flex;flex-direction:column;gap:10px"><span class="eyebrow">Tool · Improve phase</span><h1 style="font-size:clamp(1.8rem,4vw,2.6rem)">Weighted Prioritisation Matrix</h1><p class="lead">Weight your criteria, score each option from 1 to 5, and rank the options by weighted score.</p></section>
+<section class="tool-page" style="margin-top:28px">
+<div id="tool"><p class="note" style="margin-bottom:12px">Give each criterion a weight from 1 to 10 (higher means it matters more), then score every option from 1 to 5, where 5 is best on that criterion. Phrase every criterion so that a higher score is better: write “Low cost”, not “Cost”. Example: choosing a fix for chipped inserts.</p>
+<div class="tbl-wrap"><table id="mx"></table></div>
+<div class="acts"><button class="btn small" type="button" id="addOpt">Add option</button><button class="btn small" type="button" id="addCrit">Add criterion</button></div>
+<div class="out" id="out" style="margin-top:16px"></div></div>
+<div class="acts" style="margin-top:20px"><button class="btn" id="resetBtn" type="button">Reset to example values</button></div>
+</section>
+<div class="pagefoot"><a href="../index.html">All calculators and tools</a><span>Worked examples are illustrative. Check your own data, standards and customer requirements before acting on a result.</span></div>
+</main></div>
+<script src="../assets/lib.js"></script>
+<script>
+
+var EX={c:[['Reduces chipping',9],['Ease to implement',5],['Low cost',4],['Speed to results',3]],o:[['Redesign transfer fixture',[5,3,3,3]],['Switch to finer media',[4,4,4,5]],['Retrain operators',[2,5,5,4]],['Add 100% inspection',[1,3,2,5]]]};
+var C=[],O=[];
+function clamp(v,a,b){v=Math.round(parseFloat(v));return isNaN(v)?a:Math.max(a,Math.min(b,v));}
+function score(o){var tw=0,s=0;C.forEach(function(c,j){tw+=c[1];s+=c[1]*o[1][j];});return tw?s/(tw*5)*100:0;}
+function draw(){
+  var sc=O.map(score),order=sc.map(function(v,i){return i;}).sort(function(a,b){return sc[b]-sc[a];}),rank=[];order.forEach(function(i,k){rank[i]=k+1;});
+  var h='<thead><tr><th>Option</th>'+C.map(function(c,j){return '<th><input class="fmea-name" data-c="'+j+'" data-f="n" value="'+esc(c[0])+'" aria-label="Criterion name"><div style="margin-top:4px;display:flex;gap:4px;align-items:center"><span class="note">weight</span><input class="fmea-in" type="number" min="1" max="10" data-c="'+j+'" data-f="w" value="'+c[1]+'" aria-label="Weight"><button class="del" type="button" data-dc="'+j+'" aria-label="Remove criterion">×</button></div></th>';}).join('')+'<th class="num">Score</th><th class="num">Rank</th><th></th></tr></thead><tbody>';
+  h+=O.map(function(o,i){return '<tr'+(rank[i]===1?' style="background:var(--good-soft)"':'')+'><td><input class="fmea-name" data-o="'+i+'" data-f="n" value="'+esc(o[0])+'" aria-label="Option name"></td>'+o[1].map(function(v,j){return '<td><input class="fmea-in" type="number" min="1" max="5" data-o="'+i+'" data-s="'+j+'" value="'+v+'" aria-label="Score"></td>';}).join('')+'<td class="num"><b>'+fmt(sc[i],0)+'%</b></td><td class="num">'+rank[i]+'</td><td><button class="del" type="button" data-do="'+i+'" aria-label="Remove option">×</button></td></tr>';}).join('')+'</tbody>';
+  $('#mx').innerHTML=h;
+  if(!O.length||!C.length){$('#out').innerHTML='<p class="note">Add at least one option and one criterion.</p>';return;}
+  var top=O[order[0]],second=O[order[1]],gap=order.length>1?sc[order[0]]-sc[order[1]]:100;
+  $('#out').innerHTML='<div class="verdict good">Highest weighted score: <b>'+esc(top[0])+'</b> at '+fmt(sc[order[0]],0)+'% of the maximum.'+(order.length>1&&gap<5?' The runner-up, <b>'+esc(second[0])+'</b>, is within 5 points, so test whether a small change in weights flips the order before you commit.':'')+'</div><p class="note">Score = Σ(weight × score) ÷ (Σ weights × 5). A matrix structures the discussion; it does not replace judgment or a pilot.</p>';
+}
+function live(){ // update numbers without rebuilding focused inputs
+  var sc=O.map(score),order=sc.map(function(v,i){return i;}).sort(function(a,b){return sc[b]-sc[a];});
+  var rows=$$('#mx tbody tr');order.forEach(function(i,k){var r=rows[i];if(!r)return;var tds=r.querySelectorAll('td');tds[tds.length-3].innerHTML='<b>'+fmt(sc[i],0)+'%</b>';tds[tds.length-2].textContent=k+1;r.style.background=k===0?'var(--good-soft)':'';});
+  var top=O[order[0]];if(top)$('#out').innerHTML='<div class="verdict good">Highest weighted score: <b>'+esc(top[0])+'</b> at '+fmt(sc[order[0]],0)+'% of the maximum.</div><p class="note">Score = Σ(weight × score) ÷ (Σ weights × 5). Edit the table to explore how the ranking responds.</p>';
+}
+$('#tool').addEventListener('input',function(e){
+  var el=e.target; if(!el.matches('[data-f],[data-s]'))return;
+  if(el.hasAttribute('data-s')){O[+el.getAttribute('data-o')][1][+el.getAttribute('data-s')]=clamp(el.value,1,5);}
+  else if(el.hasAttribute('data-c')){var c=C[+el.getAttribute('data-c')];if(el.getAttribute('data-f')==='n')c[0]=el.value;else c[1]=clamp(el.value,1,10);}
+  else O[+el.getAttribute('data-o')][0]=el.value;
+  live();
+});
+$('#tool').addEventListener('click',function(e){
+  var t=e.target;
+  if(t.id==='addOpt'){O.push(['New option',C.map(function(){return 3;})]);draw();}
+  else if(t.id==='addCrit'){C.push(['New criterion',5]);O.forEach(function(o){o[1].push(3);});draw();}
+  else if(t.hasAttribute('data-do')){O.splice(+t.getAttribute('data-do'),1);draw();}
+  else if(t.hasAttribute('data-dc')){var j=+t.getAttribute('data-dc');C.splice(j,1);O.forEach(function(o){o[1].splice(j,1);});draw();}
+});
+setupTool({},function(){},function(){C=EX.c.map(function(c){return [c[0],c[1]];});O=EX.o.map(function(o){return [o[0],o[1].slice()];});draw();});
+
+</script>
+</body>
+</html>

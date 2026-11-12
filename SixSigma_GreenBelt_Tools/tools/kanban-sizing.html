@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kanban Card Sizing Calculator | Green Belt Toolkit</title>
+<meta name="description" content="Work out how many kanban cards a loop needs from demand, replenishment time, safety stock and container size.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@500;600;700&display=swap">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<header class="top"><div class="top-in"><a class="brand" href="../index.html"><i></i>Green Belt Toolkit</a><nav class="nav" aria-label="Sections"><a href="../index.html#calculators">Calculators</a><a href="../index.html#tools">Tools</a></nav><button class="icon-btn" id="themeBtn" type="button" aria-label="Switch colour theme">Theme</button></div></header>
+<div class="wrap"><main>
+<section style="padding-top:36px;display:flex;flex-direction:column;gap:10px"><span class="eyebrow">Tool · Improve phase</span><h1 style="font-size:clamp(1.8rem,4vw,2.6rem)">Kanban Card Sizing Calculator</h1><p class="lead">Work out how many kanban cards a loop needs from demand, replenishment time, safety stock and container size.</p></section>
+<section class="tool-page" style="margin-top:28px">
+<div class="calc" id="tool"><div><div class="fields"><div class="field"><label for="n_d">Daily demand (units)</label><input id="n_d" type="number" step="any" min="0"></div><div class="field"><label for="n_l">Replenishment lead time (days)</label><input id="n_l" type="number" step="any" min="0"></div><div class="field"><label for="n_s">Safety factor (%)</label><input id="n_s" type="number" step="any" min="0"></div><div class="field"><label for="n_c">Units per container</label><input id="n_c" type="number" step="any" min="1"></div></div><p class="note" style="margin-top:12px">Cards N = ⌈ D × L × (1 + s) ÷ C ⌉. The maximum stock in the loop is N × C. Lead time is the whole cycle from the card being released to the full container arriving. Example: replenishing hone media boxes for a cell using 120 units a day.</p></div><div class="out" id="out"></div></div>
+<div class="acts" style="margin-top:20px"><button class="btn" id="resetBtn" type="button">Reset to example values</button></div>
+</section>
+<div class="pagefoot"><a href="../index.html">All calculators and tools</a><span>Worked examples are illustrative. Check your own data, standards and customer requirements before acting on a result.</span></div>
+</main></div>
+<script src="../assets/lib.js"></script>
+<script>
+
+function update(){
+  var D=val('n_d'),L=val('n_l'),s=val('n_s')/100,C=val('n_c');
+  if(!(D>=0&&L>=0&&s>=0&&C>=1)){$('#out').innerHTML='<p class="note">Enter non-negative demand, lead time and safety factor, and at least 1 unit per container.</p>';return;}
+  var raw=D*L*(1+s)/C,N=Math.ceil(raw),mx=N*C,days=D>0?mx/D:0,rows=[0.5,0.75,1,1.5,2].map(function(k){var n=Math.ceil(D*L*k*(1+s)/C);return '<tr'+(k===1?' style="background:var(--good-soft)"':'')+'><td>'+fmt(L*k,2)+' days'+(k===1?' (now)':'')+'</td><td class="num">'+n+'</td><td class="num">'+n*C+'</td></tr>';}).join('');
+  $('#out').innerHTML='<div class="kpis">'+kpi('Cards needed',N,'good')+kpi('Maximum stock',mx+' units')+kpi('Days of cover',fmt(days,1))+kpi('Unrounded',fmt(raw,2))+'</div><div class="verdict">Rounding up from '+fmt(raw,2)+' to '+N+' adds '+fmt((N-raw)*C,0)+' units of buffer. Use a smaller container to cut that rounding stock.</div><h4 style="margin:14px 0 6px">What a shorter or longer lead time does</h4><div class="tbl-wrap"><table><thead><tr><th>Lead time</th><th class="num">Cards</th><th class="num">Max stock</th></tr></thead><tbody>'+rows+'</tbody></table></div><p class="note">Halving the replenishment time halves the stock. That is why kanban work focuses on lead time and variability rather than on adding cards. Review the card count regularly and take cards out as the process stabilises.</p>';
+}
+setupTool({n_d:120,n_l:2,n_s:15,n_c:25},update);
+
+</script>
+</body>
+</html>

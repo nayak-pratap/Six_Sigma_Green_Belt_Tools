@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>5 Whys Root Cause Worksheet | Green Belt Toolkit</title>
+<meta name="description" content="Walk from a problem to a verified root cause, test the chain in reverse and write a countermeasure you can copy into a report.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@500;600;700&display=swap">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<header class="top"><div class="top-in"><a class="brand" href="../index.html"><i></i>Green Belt Toolkit</a><nav class="nav" aria-label="Sections"><a href="../index.html#calculators">Calculators</a><a href="../index.html#tools">Tools</a></nav><button class="icon-btn" id="themeBtn" type="button" aria-label="Switch colour theme">Theme</button></div></header>
+<div class="wrap"><main>
+<section style="padding-top:36px;display:flex;flex-direction:column;gap:10px"><span class="eyebrow">Tool · Analyze phase</span><h1 style="font-size:clamp(1.8rem,4vw,2.6rem)">5 Whys Root Cause Worksheet</h1><p class="lead">Walk from a problem to a verified root cause, test the chain in reverse and write a countermeasure you can copy into a report.</p></section>
+<section class="tool-page" style="margin-top:28px">
+<div id="tool"><p class="note" style="margin-bottom:12px">Ask “why” until you reach a cause you can fix and whose removal would stop the problem. Base each answer on evidence, not opinion. Example: a batch of chipped inserts.</p>
+<div class="fields" style="grid-template-columns:1fr"><div class="field"><label for="w_prob">Problem (what, where, how much)</label><input id="w_prob" type="text"></div><div class="field"><label for="w_1">Why 1: why did the problem happen?</label><input id="w_1" type="text"></div><div class="field"><label for="w_2">Why 2</label><input id="w_2" type="text"></div><div class="field"><label for="w_3">Why 3</label><input id="w_3" type="text"></div><div class="field"><label for="w_4">Why 4</label><input id="w_4" type="text"></div><div class="field"><label for="w_5">Why 5</label><input id="w_5" type="text"></div><div class="field"><label for="w_fix">Countermeasure that removes the root cause</label><input id="w_fix" type="text"></div><div class="field"><label for="w_ver">How you will verify it worked</label><input id="w_ver" type="text"></div></div>
+<div class="acts"><button class="btn small" type="button" id="clearBtn">Clear all fields</button><button class="btn small" type="button" id="copyBtn">Copy summary</button></div>
+<div class="out" id="out" style="margin-top:16px"></div></div>
+<div class="acts" style="margin-top:20px"><button class="btn" id="resetBtn" type="button">Reset to example values</button></div>
+</section>
+<div class="pagefoot"><a href="../index.html">All calculators and tools</a><span>Worked examples are illustrative. Check your own data, standards and customer requirements before acting on a result.</span></div>
+</main></div>
+<script src="../assets/lib.js"></script>
+<script>
+
+var EX={w_prob:'12% of Lot 4417 inserts rejected for edge chipping at final inspection',w_1:'The cutting edge was damaged after honing',w_2:'Inserts touched each other in the transfer tray',w_3:'The tray has no separators and holds 40 inserts per tray',w_4:'The tray was chosen for coating-line racks, not for hone output',w_5:'Nobody checked handling damage when the line layout was changed',w_fix:'Fit separated trays at the hone exit and add handling to the layout-change checklist',w_ver:'Chip rate below 2% on three consecutive lots; control chart reviewed weekly'};
+var IDS=['w_1','w_2','w_3','w_4','w_5'];
+function summary(){
+  var prob=$('#w_prob').value.trim(),ws=IDS.map(function(i){return $('#'+i).value.trim();}).filter(Boolean);
+  var t='PROBLEM: '+prob+'\n';ws.forEach(function(w,i){t+='WHY '+(i+1)+': '+w+'\n';});
+  t+='ROOT CAUSE: '+(ws.length?ws[ws.length-1]:'')+'\nCOUNTERMEASURE: '+$('#w_fix').value.trim()+'\nVERIFICATION: '+$('#w_ver').value.trim();return t;
+}
+function update(){
+  var ws=IDS.map(function(i){return $('#'+i).value.trim();}),filled=ws.filter(Boolean),prob=$('#w_prob').value.trim(),msgs=[];
+  if(!prob)msgs.push(['warn','State the problem with a place and a number.']);
+  else if(!/\d/.test(prob))msgs.push(['warn','The problem has no number. A measurable problem is easier to verify later.']);
+  if(filled.length<3)msgs.push(['warn','Fewer than three whys. Most problems need three to five levels before you reach something you can control.']);
+  for(var i=1;i<ws.length;i++)if(ws[i]&&!ws[i-1])msgs.push(['warn','Why '+(i+1)+' is filled but why '+i+' is empty.']);
+  if(filled.some(function(w){return /operator|careless|forgot|human error|negligen|mistake|lazy|not trained|didn'?t follow/i.test(w);}))msgs.push(['warn','An answer blames a person. Ask one more why: what in the system allowed that mistake to happen or go unnoticed?']);
+  if(!$('#w_fix').value.trim())msgs.push(['warn','No countermeasure yet. A root cause without an action changes nothing.']);
+  if(!$('#w_ver').value.trim())msgs.push(['warn','No verification plan. Say what number should move, by how much and by when.']);
+  var chain='';
+  if(filled.length){chain='<ol class="plain" style="list-style:none;padding:0">'+['<li><b>Problem:</b> '+esc(prob)+'</li>'].concat(filled.map(function(w,k){return '<li style="margin-top:6px">↓ <b>Why '+(k+1)+':</b> '+esc(w)+'</li>';})).join('')+'</ol>';
+    var rev=filled.slice().reverse();chain+='<div class="verdict" style="margin-top:12px"><b>Reverse test.</b> Read upward with “therefore”: <i>'+esc(rev[0])+'</i>'+rev.slice(1).concat([prob]).map(function(w){return ', therefore <i>'+esc(w)+'</i>';}).join('')+'. If any link sounds forced, the chain is wrong at that link.</div>';}
+  $('#out').innerHTML=chain+(msgs.length?'<div class="verdict warn" style="margin-top:12px"><b>Check:</b><ul class="plain">'+msgs.map(function(m){return '<li>'+esc(m[1])+'</li>';}).join('')+'</ul></div>':'<div class="verdict good" style="margin-top:12px">The worksheet is complete. Test the root cause with data before you act on it.</div>');
+}
+$('#clearBtn').addEventListener('click',function(){Object.keys(EX).forEach(function(k){$('#'+k).value='';});update();});
+$('#copyBtn').addEventListener('click',function(){copyText(summary(),this);});
+setupTool(EX,update);
+
+</script>
+</body>
+</html>

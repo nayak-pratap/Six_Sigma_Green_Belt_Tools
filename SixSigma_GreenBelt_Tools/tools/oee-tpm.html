@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OEE Calculator (Total Productive Maintenance) | Green Belt Toolkit</title>
+<meta name="description" content="Compute availability, performance, quality and OEE from a shift’s data and see the time lost to each of the big loss types.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@500;600;700&display=swap">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<header class="top"><div class="top-in"><a class="brand" href="../index.html"><i></i>Green Belt Toolkit</a><nav class="nav" aria-label="Sections"><a href="../index.html#calculators">Calculators</a><a href="../index.html#tools">Tools</a></nav><button class="icon-btn" id="themeBtn" type="button" aria-label="Switch colour theme">Theme</button></div></header>
+<div class="wrap"><main>
+<section style="padding-top:36px;display:flex;flex-direction:column;gap:10px"><span class="eyebrow">Tool · Control phase</span><h1 style="font-size:clamp(1.8rem,4vw,2.6rem)">OEE Calculator (Total Productive Maintenance)</h1><p class="lead">Compute availability, performance, quality and OEE from a shift’s data and see the time lost to each of the big loss types.</p></section>
+<section class="tool-page" style="margin-top:28px">
+<div class="calc" id="tool"><div><div class="fields"><div class="field"><label for="o_pl">Planned production time (min)</label><input id="o_pl" type="number" step="any" min="1"></div><div class="field"><label for="o_bd">Breakdown stops (min)</label><input id="o_bd" type="number" step="any" min="0"></div><div class="field"><label for="o_su">Setup and changeover (min)</label><input id="o_su" type="number" step="any" min="0"></div><div class="field"><label for="o_ct">Ideal cycle time (min per piece)</label><input id="o_ct" type="number" step="any" min="0.0001"></div><div class="field"><label for="o_tot">Total pieces made</label><input id="o_tot" type="number" step="any" min="0"></div><div class="field"><label for="o_rej">Rejects (pieces)</label><input id="o_rej" type="number" step="any" min="0"></div></div><p class="note" style="margin-top:12px">Availability = run time ÷ planned time. Performance = (ideal cycle time × pieces) ÷ run time. Quality = good pieces ÷ total pieces. OEE = A × P × Q. World-class benchmark often quoted is 85% (90% × 95% × 99.9%). Example: one 450-minute shift on a hone machine.</p></div><div class="out" id="out"></div></div>
+<div class="acts" style="margin-top:20px"><button class="btn" id="resetBtn" type="button">Reset to example values</button></div>
+</section>
+<div class="pagefoot"><a href="../index.html">All calculators and tools</a><span>Worked examples are illustrative. Check your own data, standards and customer requirements before acting on a result.</span></div>
+</main></div>
+<script src="../assets/lib.js"></script>
+<script>
+
+function update(){
+  var pl=val('o_pl'),bd=val('o_bd'),su=val('o_su'),ct=val('o_ct'),tot=val('o_tot'),rj=val('o_rej');
+  if(!(pl>0&&bd>=0&&su>=0&&ct>0&&tot>0&&rj>=0&&rj<=tot&&bd+su<pl)){$('#out').innerHTML='<p class="note">Check the entries: planned time above zero, stops below planned time, rejects not above total pieces.</p>';return;}
+  var run=pl-bd-su,A=run/pl,ideal=ct*tot,P=ideal/run,Q=(tot-rj)/tot,oee=A*P*Q,speed=Math.max(0,run-ideal),qual=rj*ct;
+  var cls=oee>=0.85?'good':oee>=0.6?'warn':'bad',losses=[{l:'Breakdowns',v:bd,c:'var(--bad)'},{l:'Setup and changeover',v:su,c:'var(--bad)'},{l:'Speed loss and small stops',v:speed,c:'var(--warn)'},{l:'Rejects and rework',v:qual,c:'var(--warn)'}].sort(function(a,b){return b.v-a.v;});
+  $('#out').innerHTML='<div class="kpis">'+kpi('OEE',fmt(oee*100,1)+'%',cls)+kpi('Availability',fmt(A*100,1)+'%',A>=0.9?'good':'warn')+kpi('Performance',fmt(P*100,1)+'%',P>=0.95?'good':'warn')+kpi('Quality',fmt(Q*100,1)+'%',Q>=0.999?'good':Q>=0.98?'warn':'bad')+'</div><div class="verdict '+cls+'">'+(P>1?'Performance above 100% means the ideal cycle time is too slow or pieces were miscounted. Re-check the standard.':oee>=0.85?'World-class by the usual benchmark.':'The biggest loss is <b>'+esc(losses[0].l)+'</b> at about '+fmt(losses[0].v,0)+' minutes of lost production time. Start there.')+'</div><h4 style="margin:14px 0 6px">Where the planned time went (minutes)</h4>'+hbars(losses.concat([{l:'Fully productive time',v:ideal-qual,c:'var(--good)'}]),function(v){return fmt(v,0);})+'<p class="note">Use the loss categories to choose TPM pillars: autonomous maintenance and planned maintenance for breakdowns, SMED for setups, focused improvement for speed and quality losses. Compare like with like: OEE is for improving one machine over time, not for ranking different machines.</p>';
+}
+setupTool({o_pl:450,o_bd:40,o_su:35,o_ct:0.5,o_tot:700,o_rej:21},update);
+
+</script>
+</body>
+</html>

@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Attribute Agreement Analysis | Green Belt Toolkit</title>
+<meta name="description" content="Check pass/fail inspection: agreement within each appraiser, with the known standard, and Cohen’s kappa.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@500;600;700&display=swap">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<header class="top"><div class="top-in"><a class="brand" href="../index.html"><i></i>Green Belt Toolkit</a><nav class="nav" aria-label="Sections"><a href="../index.html#calculators">Calculators</a><a href="../index.html#tools">Tools</a></nav><button class="icon-btn" id="themeBtn" type="button" aria-label="Switch colour theme">Theme</button></div></header>
+<div class="wrap"><main>
+<section style="padding-top:36px;display:flex;flex-direction:column;gap:10px"><span class="eyebrow">Tool · Measure phase</span><h1 style="font-size:clamp(1.8rem,4vw,2.6rem)">Attribute Agreement Analysis</h1><p class="lead">Check pass/fail inspection: agreement within each appraiser, with the known standard, and Cohen’s kappa.</p></section>
+<section class="tool-page" style="margin-top:28px">
+<div class="calc" id="tool"><div><div class="fields"><div class="field" style="grid-column:1/-1"><label for="a_data">Sample, standard, A1, A2, B1, B2</label><textarea id="a_data" rows="12" spellcheck="false"></textarea></div></div><p class="note" style="margin-top:12px">One sample per line: ID, the true standard, then Appraiser A trial 1, A trial 2, B trial 1, B trial 2. Use any two labels, for example G (good) and N (no-good). Example: 20 inserts inspected for chips by two inspectors twice.</p></div><div class="out" id="out"></div></div>
+<div class="acts" style="margin-top:20px"><button class="btn" id="resetBtn" type="button">Reset to example values</button></div>
+</section>
+<div class="pagefoot"><a href="../index.html">All calculators and tools</a><span>Worked examples are illustrative. Check your own data, standards and customer requirements before acting on a result.</span></div>
+</main></div>
+<script src="../assets/lib.js"></script>
+<script>
+
+var EXTXT="S01 G G G G G\nS02 G G G G G\nS03 G G G G G\nS04 N N N N N\nS05 N N N N G\nS06 G G G G G\nS07 N N N N N\nS08 G G N G G\nS09 G G G G G\nS10 N G N N N\nS11 G G G G G\nS12 N N N N N\nS13 G G G G G\nS14 N N N G N\nS15 G G G G G\nS16 G G G G G\nS17 N N N N N\nS18 G G G G G\nS19 N N N N N\nS20 G G G G G";
+function kappa(a,b){var n=a.length,po=0,ca={},cb={};a.forEach(function(x,i){if(x===b[i])po++;ca[x]=(ca[x]||0)+1;cb[b[i]]=(cb[b[i]]||0)+1;});po/=n;var pe=0;Object.keys(ca).forEach(function(k){pe+=(ca[k]/n)*((cb[k]||0)/n);});return pe>=1?1:(po-pe)/(1-pe);}
+function update(){
+  var rows=$('#a_data').value.split(/\n/).map(function(l){return l.trim().split(/[\s,;]+/);}).filter(function(r){return r.length>=6;});
+  if(rows.length<5){$('#out').innerHTML='<p class="note">Enter at least 5 samples with six columns each.</p>';return;}
+  var n=rows.length,S=rows.map(function(r){return r[1];}),A1=rows.map(function(r){return r[2];}),A2=rows.map(function(r){return r[3];}),B1=rows.map(function(r){return r[4];}),B2=rows.map(function(r){return r[5];});
+  function cnt(f){var c=0;for(var i=0;i<n;i++)if(f(i))c++;return c;}
+  var wA=cnt(function(i){return A1[i]===A2[i];}),wB=cnt(function(i){return B1[i]===B2[i];});
+  var sA=cnt(function(i){return A1[i]===S[i]&&A2[i]===S[i];}),sB=cnt(function(i){return B1[i]===S[i]&&B2[i]===S[i];});
+  var all=cnt(function(i){return A1[i]===S[i]&&A2[i]===S[i]&&B1[i]===S[i]&&B2[i]===S[i];});
+  var kA=kappa(A1,S),kB=kappa(B1,S);
+  function pc(x){return fmt(x/n*100,0)+'%';}
+  function kc(k){return k>=0.9?'good':k>=0.7?'warn':'bad';}
+  var worst=[];for(var i=0;i<n;i++){var w=[A1[i],A2[i],B1[i],B2[i]].filter(function(x){return x!==S[i];}).length;if(w>0)worst.push([rows[i][0],w]);}
+  worst.sort(function(a,b){return b[1]-a[1];});
+  $('#out').innerHTML='<div class="tbl-wrap"><table><thead><tr><th></th><th class="num">Appraiser A</th><th class="num">Appraiser B</th></tr></thead><tbody><tr><td>Agrees with itself across trials</td><td class="num">'+pc(wA)+'</td><td class="num">'+pc(wB)+'</td></tr><tr><td>Matches the standard on both trials</td><td class="num">'+pc(sA)+'</td><td class="num">'+pc(sB)+'</td></tr><tr><td>Cohen’s kappa vs standard (trial 1)</td><td class="num">'+fmt(kA,2)+'</td><td class="num">'+fmt(kB,2)+'</td></tr></tbody></table></div>'+
+   '<div class="kpis" style="margin-top:12px">'+kpi('All four match the standard',pc(all),all/n>=0.9?'good':all/n>=0.8?'warn':'bad')+kpi('Kappa A',fmt(kA,2),kc(kA))+kpi('Kappa B',fmt(kB,2),kc(kB))+'</div>'+
+   '<div class="verdict '+(Math.min(kA,kB)>=0.9?'good':Math.min(kA,kB)>=0.7?'warn':'bad')+'" style="margin-top:12px">'+(Math.min(kA,kB)>=0.9?'Excellent agreement.':Math.min(kA,kB)>=0.7?'Acceptable, but improve it if the decision is critical.':'Not acceptable. Improve the criteria, examples and training before you trust this inspection.')+(worst.length?' Samples that caused disagreement: '+worst.slice(0,5).map(function(w){return esc(w[0]);}).join(', ')+'. Use them as reference examples in training.':'')+'</div><p class="note">Common rule of thumb: kappa 0.9 or above is excellent, 0.7 to 0.9 is acceptable, below 0.7 needs work. Use at least 30 samples, including borderline ones, in a real study.</p>';
+}
+setupTool({a_data:EXTXT},update);
+
+</script>
+</body>
+</html>

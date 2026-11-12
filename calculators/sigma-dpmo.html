@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sigma Level and DPMO Calculator | Green Belt Toolkit</title>
+<meta name="description" content="Turn defect counts into DPU, DPMO, yield and sigma level, with or without the 1.5σ shift.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@500;600;700&display=swap">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<header class="top"><div class="top-in"><a class="brand" href="../index.html"><i></i>Green Belt Toolkit</a><nav class="nav" aria-label="Sections"><a href="../index.html#calculators">Calculators</a><a href="../index.html#tools">Tools</a></nav><button class="icon-btn" id="themeBtn" type="button" aria-label="Switch colour theme">Theme</button></div></header>
+<div class="wrap"><main>
+<section style="padding-top:36px;display:flex;flex-direction:column;gap:10px"><span class="eyebrow">Calculator · Measure phase</span><h1 style="font-size:clamp(1.8rem,4vw,2.6rem)">Sigma Level and DPMO Calculator</h1><p class="lead">Turn defect counts into DPU, DPMO, yield and sigma level, with or without the 1.5σ shift.</p></section>
+<section class="tool-page" style="margin-top:28px">
+<div class="calc" id="tool"><div><div class="fields"><div class="field"><label for="s_def">Defects found</label><input id="s_def" type="number" step="any"></div><div class="field"><label for="s_units">Units inspected</label><input id="s_units" type="number" step="any"></div><div class="field"><label for="s_opp">Opportunities per unit</label><input id="s_opp" type="number" step="any"></div><div class="field"><label for="s_shift">1.5σ shift</label><select id="s_shift"><option value="1">Include (conventional)</option><option value="0">Exclude (short-term)</option></select></div></div><p class="note" style="margin-top:12px">DPU = defects ÷ units. DPMO = defects ÷ (units × opportunities) × 1,000,000. Yield = 1 − defects ÷ (units × opportunities). Sigma = z(1 − DPMO/10⁶) + 1.5. Example: 12 defects on 500 inserts with 4 opportunities each.</p></div><div class="out" id="out"></div></div>
+<div class="acts" style="margin-top:20px"><button class="btn" id="resetBtn" type="button">Reset to example values</button></div>
+</section>
+<div class="pagefoot"><a href="../index.html">All calculators and tools</a><span>Worked examples are illustrative. Check your own data, standards and customer requirements before acting on a result.</span></div>
+</main></div>
+<script src="../assets/lib.js"></script>
+<script>
+
+function update(){
+  var d=val('s_def'),u=val('s_units'),o=val('s_opp'),sh=$('#s_shift').value==='1';
+  if(!(d>=0&&u>0&&o>0)){$('#out').innerHTML='<p class="note">Enter non-negative defects and positive units and opportunities.</p>';return;}
+  var r=sigmaLevel(d,u,o,sh), cls=r.sigma>=5?'good':r.sigma>=3.5?'warn':'bad';
+  var rows=[1,2,3,4,5,6].map(function(k){var v=Math.round(1e6*(1-normCdf(k-1.5)));return '<tr><td>'+k+'σ</td><td class="num">'+(k===6?'3.4':v.toLocaleString('en-US'))+'</td></tr>';});
+  $('#out').innerHTML='<div class="kpis">'+kpi('DPU',fmt(r.dpu,4))+kpi('DPMO',Math.round(r.dpmo).toLocaleString('en-US'))+kpi('Yield',fmt(r.yield*100,2)+'%')+kpi('Sigma level',fmt(r.sigma,2),cls)+'</div>'+
+   '<div class="verdict '+cls+'">'+(r.sigma>=6?'World-class on this measure.':r.sigma>=4?'Good, but still about '+Math.round(r.dpmo).toLocaleString('en-US')+' defects per million. Compare the cost of each defect before spending to improve.':'Room to improve. Check the measurement system before trusting the number.')+'</div>'+
+   '<div class="tbl-wrap"><table><thead><tr><th>Sigma level (with 1.5σ shift)</th><th class="num">DPMO</th></tr></thead><tbody>'+rows.join('')+'</tbody></table></div>';
+}
+setupTool({s_def:12,s_units:500,s_opp:4,s_shift:'1'},update);
+
+</script>
+</body>
+</html>

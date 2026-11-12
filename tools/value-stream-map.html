@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Value Stream Map Calculator | Green Belt Toolkit</title>
+<meta name="description" content="Enter the steps of a flow with cycle times and waiting stock, and get lead time, value-added ratio, takt comparison and the bottleneck.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@500;600;700&display=swap">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<header class="top"><div class="top-in"><a class="brand" href="../index.html"><i></i>Green Belt Toolkit</a><nav class="nav" aria-label="Sections"><a href="../index.html#calculators">Calculators</a><a href="../index.html#tools">Tools</a></nav><button class="icon-btn" id="themeBtn" type="button" aria-label="Switch colour theme">Theme</button></div></header>
+<div class="wrap"><main>
+<section style="padding-top:36px;display:flex;flex-direction:column;gap:10px"><span class="eyebrow">Tool · Measure phase</span><h1 style="font-size:clamp(1.8rem,4vw,2.6rem)">Value Stream Map Calculator</h1><p class="lead">Enter the steps of a flow with cycle times and waiting stock, and get lead time, value-added ratio, takt comparison and the bottleneck.</p></section>
+<section class="tool-page" style="margin-top:28px">
+<div id="tool"><p class="note" style="margin-bottom:12px">Set the demand first to get takt time, then list each step with cycle time, changeover, uptime and the stock waiting before it. Waiting time is stock × takt. Example: an insert flowing from blanks to coating.</p><div class="fields" style="grid-template-columns:repeat(auto-fit,minmax(min(100%,180px),1fr));margin-bottom:14px"><div class="field"><label for="v_av">Available minutes per day</label><input id="v_av" type="number" step="any"></div><div class="field"><label for="v_dm">Customer demand per day</label><input id="v_dm" type="number" step="any"></div></div><div id="g"></div><div class="out" id="out" style="margin-top:16px"></div></div>
+<div class="acts" style="margin-top:20px"><button class="btn" id="resetBtn" type="button">Reset to example values</button></div>
+</section>
+<div class="pagefoot"><a href="../index.html">All calculators and tools</a><span>Worked examples are illustrative. Check your own data, standards and customer requirements before acting on a result.</span></div>
+</main></div>
+<script src="../assets/lib.js"></script>
+<script>
+
+var grid=gridTable({host:'g',extra:['Wait (min)','Effective CT'],
+ cols:[{k:'n',l:'Step',w:140},{k:'ct',l:'Cycle time (min/pc)',t:'num',min:0},{k:'co',l:'Changeover (min)',t:'num',min:0},{k:'up',l:'Uptime %',t:'num',min:1,max:100},{k:'wip',l:'Stock before (pcs)',t:'num',min:0},{k:'va',l:'Adds value?',t:'sel',o:[['Y','Yes'],['N','No']]}],
+ example:[{n:'Receive and stage blanks',ct:2,co:0,up:100,wip:20,va:'N'},{n:'Load fixture',ct:3,co:10,up:95,wip:8,va:'N'},{n:'Hone edges',ct:12,co:25,up:88,wip:12,va:'Y'},{n:'Wash and dry',ct:4,co:0,up:97,wip:6,va:'N'},{n:'Inspect',ct:5,co:0,up:99,wip:10,va:'N'},{n:'Transfer to coating',ct:2,co:0,up:100,wip:15,va:'N'}],
+ compute:function(rows){
+  var av=val('v_av'),dm=val('v_dm'),takt=av>0&&dm>0?av/dm:NaN;
+  if(!(takt>0))return {out:'<p class="note">Enter available minutes and demand.</p>'};
+  var tot=0,vaT=0,ct=0,bn=-1,bv=-1;
+  var cells=rows.map(function(r,i){var eff=nz(r.ct)/Math.max(0.01,nz(r.up)/100),wait=nz(r.wip)*takt;tot+=wait+nz(r.ct);ct+=nz(r.ct);if(r.va==='Y')vaT+=nz(r.ct);if(eff>bv){bv=eff;bn=i;}return [fmt(wait,0),'<span style="color:var(--'+(eff>takt?'bad':'good')+')">'+fmt(eff,1)+'</span>'];});
+  var pce=tot?vaT/tot*100:0,s=rows.map(function(r,i){return {l:r.n,v:nz(r.wip)*takt+nz(r.ct),c:i===bn?'var(--bad)':''};});
+  return {cells:cells,out:'<div class="kpis">'+kpi('Takt time',fmt(takt,1)+' min')+kpi('Lead time',fmt(tot/60,1)+' h')+kpi('Value-added time',fmt(vaT,0)+' min')+kpi('Process cycle efficiency',fmt(pce,1)+'%',pce>=25?'good':pce>=10?'warn':'bad')+'</div>'+
+   '<h4 style="margin:14px 0 6px">Time spent at each step (waiting plus processing, minutes)</h4>'+hbars(s,function(v){return fmt(v,0);})+
+   '<div class="verdict '+(bv>takt?'bad':'good')+'" style="margin-top:12px">'+(bv>takt?'<b>'+esc(rows[bn].n)+'</b> is slower than takt ('+fmt(bv,1)+' vs '+fmt(takt,1)+' min per piece after uptime). It limits the whole flow; look here first.':'Every step keeps up with takt.')+' Only '+fmt(pce,1)+'% of lead time adds value, so most of the gain is in shrinking the waiting stock between steps.</div><p class="note">Effective cycle time = cycle time ÷ uptime. Changeover is not in the lead-time sum; use the SMED tool to reduce it.</p>'};
+ }});
+function upd(){grid.recompute();}
+setupTool({v_av:450,v_dm:36},upd,function(){$('#v_av').value=450;$('#v_dm').value=36;grid.reset();});
+
+</script>
+</body>
+</html>

@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Voice of the Customer to CTQ | Green Belt Toolkit</title>
+<meta name="description" content="Turn what customers say into needs and then into measurable critical-to-quality requirements, and flag any that are still vague.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@500;600;700&display=swap">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<header class="top"><div class="top-in"><a class="brand" href="../index.html"><i></i>Green Belt Toolkit</a><nav class="nav" aria-label="Sections"><a href="../index.html#calculators">Calculators</a><a href="../index.html#tools">Tools</a></nav><button class="icon-btn" id="themeBtn" type="button" aria-label="Switch colour theme">Theme</button></div></header>
+<div class="wrap"><main>
+<section style="padding-top:36px;display:flex;flex-direction:column;gap:10px"><span class="eyebrow">Tool · Define phase</span><h1 style="font-size:clamp(1.8rem,4vw,2.6rem)">Voice of the Customer to CTQ</h1><p class="lead">Turn what customers say into needs and then into measurable critical-to-quality requirements, and flag any that are still vague.</p></section>
+<section class="tool-page" style="margin-top:28px">
+<div id="tool"><p class="note" style="margin-bottom:12px">Write the customer’s own words first, then the need behind them, then a measurable requirement with a target. A CTQ without a number cannot be managed. Example: voices from machine shops using carbide inserts. The last row is deliberately vague.</p><div id="g"></div><div class="out" id="out" style="margin-top:16px"></div></div>
+<div class="acts" style="margin-top:20px"><button class="btn" id="resetBtn" type="button">Reset to example values</button></div>
+</section>
+<div class="pagefoot"><a href="../index.html">All calculators and tools</a><span>Worked examples are illustrative. Check your own data, standards and customer requirements before acting on a result.</span></div>
+</main></div>
+<script src="../assets/lib.js"></script>
+<script>
+
+var grid=gridTable({host:'g',extra:['Check'],
+ cols:[{k:'voice',l:'Customer voice (verbatim)',w:210},{k:'need',l:'Underlying need',w:150},{k:'ctq',l:'CTQ measure',w:170},{k:'target',l:'Target',w:80},{k:'prio',l:'Priority',t:'sel',o:[['5','5 Critical'],['4','4 High'],['3','3 Medium'],['2','2 Low'],['1','1 Nice to have']]}],
+ example:[
+  {voice:'Inserts keep chipping and I have to stop the machine',need:'Uninterrupted machining',ctq:'Chipped inserts per 1,000',target:'<= 15',prio:'5'},
+  {voice:'I never know if tool life will be the same as last batch',need:'Predictable tool life',ctq:'Batch-to-batch tool life variation (CV)',target:'<= 8%',prio:'5'},
+  {voice:'Wrong grade turned up in the box',need:'Correct identification',ctq:'Mislabelled boxes per 10,000',target:'0',prio:'4'},
+  {voice:'Delivery is often late',need:'Reliable delivery',ctq:'Orders delivered by promise date',target:'>= 98%',prio:'4'},
+  {voice:'Packaging is a pain',need:'Easy handling',ctq:'',target:'',prio:'2'}],
+ compute:function(rows){
+  var ok=0,cells=rows.map(function(r){var good=r.ctq&&/\d/.test(String(r.target));if(good)ok++;return [good?'✓ measurable':'<span style="color:var(--bad)">Add a measure and a numeric target</span>'];});
+  var top=rows.filter(function(r){return r.ctq&&/\d/.test(String(r.target));}).sort(function(a,b){return b.prio-a.prio;});
+  return {cells:cells,out:'<div class="kpis">'+kpi('Voices captured',rows.length)+kpi('Measurable CTQs',ok+' of '+rows.length,ok===rows.length?'good':'warn')+'</div>'+(top.length?'<div class="verdict good" style="margin-top:10px"><b>CTQ list for the charter, by priority:</b><ul class="plain">'+top.map(function(r){return '<li>'+esc(r.ctq)+' '+esc(r.target)+' <span class="muted">(priority '+r.prio+')</span></li>';}).join('')+'</ul></div>':'')+'<p class="note">Check that each CTQ ties to a real complaint or requirement, and that you can measure it with the system you have. Test the wording with the customer.</p>'};
+ }});
+setupTool({},function(){},function(){grid.reset();});
+
+</script>
+</body>
+</html>

@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gage R&R Calculator | Green Belt Toolkit</title>
+<meta name="description" content="Judge a measurement system from its repeatability, reproducibility and part-to-part variation.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@500;600;700&display=swap">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<header class="top"><div class="top-in"><a class="brand" href="../index.html"><i></i>Green Belt Toolkit</a><nav class="nav" aria-label="Sections"><a href="../index.html#calculators">Calculators</a><a href="../index.html#tools">Tools</a></nav><button class="icon-btn" id="themeBtn" type="button" aria-label="Switch colour theme">Theme</button></div></header>
+<div class="wrap"><main>
+<section style="padding-top:36px;display:flex;flex-direction:column;gap:10px"><span class="eyebrow">Calculator · Measure phase</span><h1 style="font-size:clamp(1.8rem,4vw,2.6rem)">Gage R&R Calculator</h1><p class="lead">Judge a measurement system from its repeatability, reproducibility and part-to-part variation.</p></section>
+<section class="tool-page" style="margin-top:28px">
+<div class="calc" id="tool"><div><div class="fields"><div class="field"><label for="g_ev">Repeatability σ (equipment variation)</label><input id="g_ev" type="number" step="any" min="0"></div><div class="field"><label for="g_av">Reproducibility σ (appraiser variation)</label><input id="g_av" type="number" step="any" min="0"></div><div class="field"><label for="g_pv">Part-to-part σ</label><input id="g_pv" type="number" step="any" min="0.0001"></div></div><p class="note" style="margin-top:12px">GRR = √(EV² + AV²). Total = √(GRR² + PV²). %GRR = GRR ÷ Total. Number of distinct categories = 1.41 × PV ÷ GRR (aim for 5 or more). Common guide: under 10% good, 10% to 30% conditional, over 30% unacceptable. Take the σ values from your ANOVA or average-and-range study output.</p></div><div class="out" id="out"></div></div>
+<div class="acts" style="margin-top:20px"><button class="btn" id="resetBtn" type="button">Reset to example values</button></div>
+</section>
+<div class="pagefoot"><a href="../index.html">All calculators and tools</a><span>Worked examples are illustrative. Check your own data, standards and customer requirements before acting on a result.</span></div>
+</main></div>
+<script src="../assets/lib.js"></script>
+<script>
+
+function update(){
+  var ev=val('g_ev'),av=val('g_av'),pv=val('g_pv');
+  if(!(ev>=0&&av>=0&&pv>0&&ev+av>0)){$('#out').innerHTML='<p class="note">Enter non-negative EV and AV (not both zero) and a positive part-to-part σ.</p>';return;}
+  var g=grr(ev,av,pv),gc=g.pctGrr<10?'good':g.pctGrr<=30?'warn':'bad';
+  $('#out').innerHTML='<div class="kpis">'+kpi('%GRR',fmt(g.pctGrr,1)+'%',gc)+kpi('% repeatability',fmt(g.pctEv,1)+'%')+kpi('% reproducibility',fmt(g.pctAv,1)+'%')+kpi('% part-to-part',fmt(g.pctPv,1)+'%')+kpi('Distinct categories',g.ndc,g.ndc>=5?'good':'bad')+'</div>'+
+   '<div class="verdict '+gc+'">'+(gc==='good'?'Acceptable measurement system.':gc==='warn'?'Conditionally acceptable. Depends on the importance of the measurement and the cost of improving it.':'Unacceptable. Fix the measurement system before collecting more process data.')+(g.pctEv>g.pctAv?' Repeatability dominates, so look at the gauge and the method.':' Reproducibility dominates, so look at operator training and the procedure.')+'</div>';
+}
+setupTool({g_ev:0.3,g_av:0.2,g_pv:1.5},update);
+
+</script>
+</body>
+</html>

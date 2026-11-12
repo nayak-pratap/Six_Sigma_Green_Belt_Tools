@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>2×2 Factorial Experiment Analyzer | Green Belt Toolkit</title>
+<meta name="description" content="Enter the results of a two-factor, two-level experiment and get main effects, the interaction, significance and an interaction plot.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@500;600;700&display=swap">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<header class="top"><div class="top-in"><a class="brand" href="../index.html"><i></i>Green Belt Toolkit</a><nav class="nav" aria-label="Sections"><a href="../index.html#calculators">Calculators</a><a href="../index.html#tools">Tools</a></nav><button class="icon-btn" id="themeBtn" type="button" aria-label="Switch colour theme">Theme</button></div></header>
+<div class="wrap"><main>
+<section style="padding-top:36px;display:flex;flex-direction:column;gap:10px"><span class="eyebrow">Tool · Improve phase</span><h1 style="font-size:clamp(1.8rem,4vw,2.6rem)">2×2 Factorial Experiment Analyzer</h1><p class="lead">Enter the results of a two-factor, two-level experiment and get main effects, the interaction, significance and an interaction plot.</p></section>
+<section class="tool-page" style="margin-top:28px">
+<div id="tool"><p class="note" style="margin-bottom:12px">Run all four combinations, ideally with two or three replicates each, in random order. Enter the results of each run separated by commas. Replicates give the error estimate needed for p-values. Example: honing time and media grade against the chip rate in percent (lower is better).</p>
+<div class="fields" style="grid-template-columns:repeat(auto-fit,minmax(min(100%,180px),1fr))"><div class="field"><label for="e_an">Factor A name</label><input id="e_an" type="text"></div><div class="field"><label for="e_al">A low level</label><input id="e_al" type="text"></div><div class="field"><label for="e_ah">A high level</label><input id="e_ah" type="text"></div><div class="field"><label for="e_bn">Factor B name</label><input id="e_bn" type="text"></div><div class="field"><label for="e_bl">B low level</label><input id="e_bl" type="text"></div><div class="field"><label for="e_bh">B high level</label><input id="e_bh" type="text"></div><div class="field"><label for="e_goal">Goal for the response</label><select id="e_goal"><option value="min">Lower is better</option><option value="max">Higher is better</option></select></div></div>
+<div class="fields" style="grid-template-columns:1fr;margin-top:12px"><div class="field"><label for="e_r1">Run 1: A low, B low (results)</label><input id="e_r1" type="text"></div><div class="field"><label for="e_r2">Run 2: A high, B low</label><input id="e_r2" type="text"></div><div class="field"><label for="e_r3">Run 3: A low, B high</label><input id="e_r3" type="text"></div><div class="field"><label for="e_r4">Run 4: A high, B high</label><input id="e_r4" type="text"></div></div>
+<div class="out" id="out" style="margin-top:16px"></div></div>
+<div class="acts" style="margin-top:20px"><button class="btn" id="resetBtn" type="button">Reset to example values</button></div>
+</section>
+<div class="pagefoot"><a href="../index.html">All calculators and tools</a><span>Worked examples are illustrative. Check your own data, standards and customer requirements before acting on a result.</span></div>
+</main></div>
+<script src="../assets/lib.js"></script>
+<script>
+
+var EX={e_an:'Hone time',e_al:'30 s',e_ah:'60 s',e_bn:'Media grade',e_bl:'Coarse',e_bh:'Fine',e_goal:'min',e_r1:'4.9, 5.2, 4.7',e_r2:'3.1, 3.4, 3.0',e_r3:'4.4, 4.1, 4.6',e_r4:'1.3, 1.6, 1.2'};
+function g(i){return $('#'+i).value.trim();}
+function update(){
+  var runs=[1,2,3,4].map(function(k){return parseNums($('#e_r'+k).value);});
+  if(runs.some(function(r){return !r.length;})){$('#out').innerHTML='<p class="note">Enter at least one result for each of the four runs.</p>';return;}
+  var m=runs.map(mean),A=((m[1]+m[3])-(m[0]+m[2]))/2,B=((m[2]+m[3])-(m[0]+m[1]))/2,AB=((m[0]+m[3])-(m[1]+m[2]))/2;
+  var df=runs.reduce(function(a,r){return a+r.length-1;},0),ss=runs.reduce(function(a,r){var mm=mean(r);return a+r.reduce(function(b,v){return b+(v-mm)*(v-mm);},0);},0);
+  var inv=runs.reduce(function(a,r){return a+1/r.length;},0),se=df>0?Math.sqrt(ss/df*inv/4):null;
+  function pv(e){return se&&se>0?tTwoSidedP(e/se,df):null;}
+  function row(name,e){var p=pv(e);return '<tr><td>'+esc(name)+'</td><td class="num">'+fmt(e,3)+'</td><td class="num">'+(p===null?'n/a':p<0.0001?'< 0.0001':fmt(p,4))+'</td><td>'+(p===null?'Needs replicates':p<0.05?'<b>Significant</b>':'Not significant')+'</td></tr>';}
+  var an=g('e_an')||'A',bn=g('e_bn')||'B',al=g('e_al')||'low',ah=g('e_ah')||'high',bl=g('e_bl')||'low',bh=g('e_bh')||'high';
+  var best=0;m.forEach(function(v,i){if(g('e_goal')==='min'?v<m[best]:v>m[best])best=i;});
+  var combos=[[al,bl],[ah,bl],[al,bh],[ah,bh]];
+  var W=520,H=260,all=m.slice(),y0=Math.min.apply(null,all),y1=Math.max.apply(null,all),pd=(y1-y0)*0.15||1,f=frame(W,H,0,1,y0-pd,y1+pd,{ml:52,mr:70,xticks:false,yl:'Mean response'}),s=f.base;
+  var lowB=[m[0],m[1]],highB=[m[2],m[3]];
+  [[lowB,'var(--accent)',bl],[highB,'var(--warn)',bh]].forEach(function(l){var x1=f.xs(0.1),x2=f.xs(0.9);
+    s+='<line x1="'+x1+'" y1="'+f.ys(l[0][0])+'" x2="'+x2+'" y2="'+f.ys(l[0][1])+'" stroke-width="2.5" style="stroke:'+l[1]+'"/><circle cx="'+x1+'" cy="'+f.ys(l[0][0])+'" r="4" style="fill:'+l[1]+'"/><circle cx="'+x2+'" cy="'+f.ys(l[0][1])+'" r="4" style="fill:'+l[1]+'"/><text x="'+(x2+8)+'" y="'+(f.ys(l[0][1])+4)+'" '+f.t+'>'+esc(bn)+': '+esc(l[2])+'</text>';});
+  s+='<text x="'+f.xs(0.1)+'" y="'+(H-18)+'" text-anchor="middle" '+f.t+'>'+esc(an)+': '+esc(al)+'</text><text x="'+f.xs(0.9)+'" y="'+(H-18)+'" text-anchor="middle" '+f.t+'>'+esc(ah)+'</text>';
+  var big=Math.abs(AB)>=Math.min(Math.abs(A),Math.abs(B))*0.5, iaSig=pv(AB)!==null&&pv(AB)<0.05;
+  $('#out').innerHTML='<div class="tbl-wrap"><table><thead><tr><th>Effect</th><th class="num">Size</th><th class="num">p-value</th><th>Verdict</th></tr></thead><tbody>'+row('Main effect of '+an+' ('+ah+' minus '+al+')',A)+row('Main effect of '+bn+' ('+bh+' minus '+bl+')',B)+row('Interaction '+an+' × '+bn,AB)+'</tbody></table></div>'+
+   '<div class="tbl-wrap" style="margin-top:12px"><table><thead><tr><th>Run</th><th>'+esc(an)+'</th><th>'+esc(bn)+'</th><th class="num">Runs</th><th class="num">Mean</th></tr></thead><tbody>'+m.map(function(v,i){return '<tr'+(i===best?' style="background:var(--good-soft)"':'')+'><td>'+(i+1)+'</td><td>'+esc(combos[i][0])+'</td><td>'+esc(combos[i][1])+'</td><td class="num">'+runs[i].length+'</td><td class="num">'+fmt(v,3)+'</td></tr>';}).join('')+'</tbody></table></div>'+
+   svgWrap(W,H,s,'Interaction plot')+
+   '<div class="verdict good">Best tested setting: <b>'+esc(an)+' = '+esc(combos[best][0])+', '+esc(bn)+' = '+esc(combos[best][1])+'</b> with a mean of '+fmt(m[best],3)+'.</div>'+
+   '<div class="verdict '+(big||iaSig?'warn':'')+'" style="margin-top:10px">'+(iaSig?'The interaction is significant, so the effect of one factor depends on the level of the other. Choose the setting from the run table, not from the main effects alone.':big?'The interaction is large compared with the main effects. The lines in the plot are far from parallel, so read the run table, not just the main effects.':'The lines are close to parallel, so the factors act roughly independently.')+'</div>'+
+   '<p class="note">'+(se===null?'Without replicates there is no estimate of experimental error, so no p-values. Add replicate runs.':'Standard error of each effect: '+fmt(se,3)+' with '+df+' degrees of freedom, pooled from the spread inside each run.')+' Confirm the best setting with a small pilot before changing the process, and keep the new setting under a control chart.</p>';
+}
+setupTool(EX,update);
+
+</script>
+</body>
+</html>

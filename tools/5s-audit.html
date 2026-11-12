@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>5S Workplace Audit | Green Belt Toolkit</title>
+<meta name="description" content="Score a work area on sort, set in order, shine, standardise and sustain, and see which S is weakest.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@500;600;700&display=swap">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<header class="top"><div class="top-in"><a class="brand" href="../index.html"><i></i>Green Belt Toolkit</a><nav class="nav" aria-label="Sections"><a href="../index.html#calculators">Calculators</a><a href="../index.html#tools">Tools</a></nav><button class="icon-btn" id="themeBtn" type="button" aria-label="Switch colour theme">Theme</button></div></header>
+<div class="wrap"><main>
+<section style="padding-top:36px;display:flex;flex-direction:column;gap:10px"><span class="eyebrow">Tool · Improve phase</span><h1 style="font-size:clamp(1.8rem,4vw,2.6rem)">5S Workplace Audit</h1><p class="lead">Score a work area on sort, set in order, shine, standardise and sustain, and see which S is weakest.</p></section>
+<section class="tool-page" style="margin-top:28px">
+<div id="tool"><p class="note" style="margin-bottom:12px">Walk the area with the team and score each statement from 0 (not at all) to 4 (fully in place, everyone follows it). Be strict: a score of 4 means a stranger could see it. Example: a hone cell part-way through its 5S journey.</p><div id="g"></div><div class="out" id="out" style="margin-top:16px"></div></div>
+<div class="acts" style="margin-top:20px"><button class="btn" id="resetBtn" type="button">Reset to example values</button></div>
+</section>
+<div class="pagefoot"><a href="../index.html">All calculators and tools</a><span>Worked examples are illustrative. Check your own data, standards and customer requirements before acting on a result.</span></div>
+</main></div>
+<script src="../assets/lib.js"></script>
+<script>
+
+var cfg={host:'g',scale:[[0,'0 Not at all'],[1,'1 Started'],[2,'2 Partly in place'],[3,'3 Mostly in place'],[4,'4 Fully in place']],
+ groups:[{n:'Sort',items:['Only items needed for current work are in the area','Unneeded items have been red-tagged and removed','Broken or obsolete tools and fixtures are gone','Consumables are limited to the quantity needed']},
+  {n:'Set in order',items:['Every item has a marked home','Frequently used items are within reach','Shadow boards and labels make missing items obvious','Walkways and storage areas are marked']},
+  {n:'Shine',items:['Floors and machines are clean','Cleaning is also inspection: leaks and wear are found','Cleaning tools are at point of use','Sources of dirt have been addressed, not just cleaned']},
+  {n:'Standardise',items:['Standards for the first three S are written and visible','Photos show the target condition','Everyone knows their cleaning and checking tasks','The same standard applies in every similar area']},
+  {n:'Sustain',items:['5S is audited on a schedule','Audit results are posted','Problems found are fixed and tracked','Leaders walk the area and take part']}],
+ example:[[3,3,2,2],[3,2,2,3],[2,2,1,1],[2,1,2,1],[1,1,1,2]],
+ bands:[[85,'Excellent.','good'],[65,'Good, with gaps.','warn'],[40,'Developing.','warn'],[0,'Early stage.','bad']],
+ advice:function(g){return 'Weakest area: '+g+'. 5S is built in order: do not push “sustain” until sort and set in order are real.';}};
+var audit=auditTool(cfg);
+setupTool({},function(){},function(){audit.reset();});
+
+</script>
+</body>
+</html>

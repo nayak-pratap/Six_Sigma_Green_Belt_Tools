@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sample Size Calculator | Green Belt Toolkit</title>
+<meta name="description" content="How many to measure: estimating a mean, estimating a proportion, or comparing two means, with finite-population correction.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@500;600;700&display=swap">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<header class="top"><div class="top-in"><a class="brand" href="../index.html"><i></i>Green Belt Toolkit</a><nav class="nav" aria-label="Sections"><a href="../index.html#calculators">Calculators</a><a href="../index.html#tools">Tools</a></nav><button class="icon-btn" id="themeBtn" type="button" aria-label="Switch colour theme">Theme</button></div></header>
+<div class="wrap"><main>
+<section style="padding-top:36px;display:flex;flex-direction:column;gap:10px"><span class="eyebrow">Tool · Measure phase</span><h1 style="font-size:clamp(1.8rem,4vw,2.6rem)">Sample Size Calculator</h1><p class="lead">How many to measure: estimating a mean, estimating a proportion, or comparing two means, with finite-population correction.</p></section>
+<section class="tool-page" style="margin-top:28px">
+<div class="calc" id="tool"><div><div class="fields"><div class="field" style="grid-column:1/-1"><label for="z_mode">What are you doing?</label><select id="z_mode"><option value="mean">Estimate a mean</option><option value="prop">Estimate a proportion</option><option value="two">Compare two means</option></select></div><div class="field"><label for="z_conf">Confidence</label><select id="z_conf"><option value="0.90">90%</option><option value="0.95">95%</option><option value="0.99">99%</option></select></div><div class="field"><label for="z_sd">Standard deviation (σ)</label><input id="z_sd" type="number" step="any" min="0"></div><div class="field"><label for="z_e">Margin of error (±) or difference to detect</label><input id="z_e" type="number" step="any" min="0"></div><div class="field"><label for="z_p">Expected proportion (0 to 1)</label><input id="z_p" type="number" step="any" min="0" max="1"></div><div class="field"><label for="z_pow">Power (comparison only)</label><select id="z_pow"><option value="0.80">80%</option><option value="0.90">90%</option></select></div><div class="field"><label for="z_N">Population size (blank = very large)</label><input id="z_N" type="number" step="any" min="1"></div></div><p class="note" style="margin-top:12px">Mean: n = (z·σ ÷ E)². Proportion: n = z²·p(1−p) ÷ E². Two means: n per group = 2(z<sub>α/2</sub> + z<sub>β</sub>)²σ² ÷ Δ². Finite population: n′ = n ÷ (1 + (n−1)/N). Example: estimating mean edge radius to ±2 µm when σ is about 5 µm.</p></div><div class="out" id="out"></div></div>
+<div class="acts" style="margin-top:20px"><button class="btn" id="resetBtn" type="button">Reset to example values</button></div>
+</section>
+<div class="pagefoot"><a href="../index.html">All calculators and tools</a><span>Worked examples are illustrative. Check your own data, standards and customer requirements before acting on a result.</span></div>
+</main></div>
+<script src="../assets/lib.js"></script>
+<script>
+
+var lastMode='mean',EXE={mean:2,prop:0.02,two:3};
+function update(){
+  var mode=$('#z_mode').value;
+  if(mode!==lastMode){lastMode=mode;$('#z_e').value=EXE[mode];}
+  var c=parseFloat($('#z_conf').value),sd=val('z_sd'),E=val('z_e'),p=val('z_p'),pw=parseFloat($('#z_pow').value),N=val('z_N');
+  var z=normInv(1-(1-c)/2),n,formula,ok=true;
+  if(mode==='mean'){ok=sd>0&&E>0;n=Math.pow(z*sd/E,2);formula='(z · σ / E)² with z = '+fmt(z,3);}
+  else if(mode==='prop'){ok=p>0&&p<1&&E>0&&E<1;n=z*z*p*(1-p)/(E*E);formula='z² p (1−p) / E² with z = '+fmt(z,3);}
+  else{ok=sd>0&&E>0;var zb=normInv(pw);n=2*Math.pow(z+zb,2)*sd*sd/(E*E);formula='2 (zα/2 + zβ)² σ² / Δ² with zα/2 = '+fmt(z,3)+', zβ = '+fmt(zb,3);}
+  if(!ok){$('#out').innerHTML='<p class="note">Enter positive values for the fields this option uses. For a proportion, enter the margin as a fraction, such as 0.02 for ±2 points.</p>';return;}
+  var n1=Math.ceil(n),adj=N>0&&N<1e9?Math.ceil(n/(1+(n-1)/N)):null;
+  $('#out').innerHTML='<div class="kpis">'+kpi(mode==='two'?'Per group':'Sample size',n1,'good')+(mode==='two'?kpi('Total',2*n1):'')+(adj?kpi('With population '+N,adj):'')+'</div><div class="verdict">'+formula+'</div><p class="note">Round up and add a few units for losses. These are normal-theory sizes: for very small samples use t-based tables, and for rare events (p near 0 or 1) use exact methods. A random, representative sample matters more than a large one.</p>';
+}
+setupTool({z_mode:'mean',z_conf:'0.95',z_sd:5,z_e:2,z_p:0.05,z_pow:'0.80',z_N:''},update,function(){lastMode='mean';var d={z_mode:'mean',z_conf:'0.95',z_sd:5,z_e:2,z_p:0.05,z_pow:'0.80',z_N:''};Object.keys(d).forEach(function(k){$('#'+k).value=d[k];});});
+
+</script>
+</body>
+</html>

@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Control Chart Limits Calculator | Green Belt Toolkit</title>
+<meta name="description" content="Centre line and 3σ limits for X-bar and R, I-MR, p, np and c charts, with the constants shown.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@500;600;700&display=swap">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<header class="top"><div class="top-in"><a class="brand" href="../index.html"><i></i>Green Belt Toolkit</a><nav class="nav" aria-label="Sections"><a href="../index.html#calculators">Calculators</a><a href="../index.html#tools">Tools</a></nav><button class="icon-btn" id="themeBtn" type="button" aria-label="Switch colour theme">Theme</button></div></header>
+<div class="wrap"><main>
+<section style="padding-top:36px;display:flex;flex-direction:column;gap:10px"><span class="eyebrow">Calculator · Control phase</span><h1 style="font-size:clamp(1.8rem,4vw,2.6rem)">Control Chart Limits Calculator</h1><p class="lead">Centre line and 3σ limits for X-bar and R, I-MR, p, np and c charts, with the constants shown.</p></section>
+<section class="tool-page" style="margin-top:28px">
+<div class="calc" id="tool"><div><div class="fields"><div class="field" style="grid-column:1/-1"><label for="cc_type">Chart</label><select id="cc_type"><option value="xbar">X-bar and R (variable, subgroups)</option><option value="imr">I-MR (variable, individuals)</option><option value="p">p chart (fraction defective)</option><option value="np">np chart (number defective, constant n)</option><option value="c">c chart (defects per unit)</option></select></div><span id="ccFields" style="display:contents"></span></div><p class="note" style="margin-top:12px">Limits sit at the centre line ± 3σ of the plotted statistic. A lower limit below zero is shown as zero. Use limits from a stable baseline period, then keep them fixed. Example: five-piece subgroups of a 50 mm dimension with an average range of 4.</p></div><div class="out" id="out"></div></div>
+<div class="acts" style="margin-top:20px"><button class="btn" id="resetBtn" type="button">Reset to example values</button></div>
+</section>
+<div class="pagefoot"><a href="../index.html">All calculators and tools</a><span>Worked examples are illustrative. Check your own data, standards and customer requirements before acting on a result.</span></div>
+</main></div>
+<script src="../assets/lib.js"></script>
+<script>
+
+var DEF={xbar:{cc_n:5,cc_g:50,cc_r:4},imr:{cc_g:10,cc_r:0.5},p:{cc_p:0.05,cc_n:100},np:{cc_p:0.05,cc_n:100},c:{cc_c:4}};
+var LAB={cc_n:'Subgroup size n',cc_g:'Grand mean',cc_r:'Average range (R-bar)',cc_p:'Average fraction defective (p-bar)',cc_c:'Average defects per unit (c-bar)'};
+var LABS={imr:{cc_g:'Mean of individuals',cc_r:'Average moving range (MR-bar)'},p:{cc_n:'Sample size n'},np:{cc_n:'Sample size n (constant)'}};
+function build(t){
+  $('#ccFields').innerHTML=Object.keys(DEF[t]).map(function(id){
+    var lab=(LABS[t]&&LABS[t][id])||LAB[id];
+    return '<div class="field"><label for="'+id+'">'+lab+'</label><input id="'+id+'" type="number" step="any"'+(id==='cc_n'&&t==='xbar'?' min="2" max="10" step="1"':'')+' value="'+DEF[t][id]+'"></div>';
+  }).join('');
+}
+function update(){
+  var t=$('#cc_type').value;
+  if(!document.getElementById(Object.keys(DEF[t])[0])||document.body.getAttribute('data-t')!==t){build(t);document.body.setAttribute('data-t',t);}
+  var o=$('#out'),res='';
+  if(t==='xbar'){
+    var n=Math.round(val('cc_n')),g=val('cc_g'),rb=val('cc_r');
+    if(!(n>=2&&n<=10&&rb>=0&&g===g)){o.innerHTML='<p class="note">Subgroup size must be 2 to 10 and R-bar zero or more.</p>';return;}
+    var x=xbarR(n,g,rb);
+    res='<div class="kpis">'+kpi('X-bar UCL',fmt(x.xUcl,3))+kpi('X-bar centre',fmt(x.xCl,3))+kpi('X-bar LCL',fmt(x.xLcl,3))+'</div><div class="kpis">'+kpi('R UCL',fmt(x.rUcl,3))+kpi('R centre',fmt(x.rCl,3))+kpi('R LCL',fmt(x.rLcl,3))+'</div><p class="note">Within-subgroup σ = R-bar ÷ d2 = '+fmt(x.sigma,4)+'. Constants for n = '+n+': A2 = '+CC[n][0]+', D3 = '+CC[n][1]+', D4 = '+CC[n][2]+', d2 = '+CC[n][3]+'.</p>';
+  } else if(t==='imr'){
+    var m=imr(val('cc_g'),val('cc_r'));
+    if(!(val('cc_r')>=0)){o.innerHTML='<p class="note">Moving range must be zero or more.</p>';return;}
+    res='<div class="kpis">'+kpi('X UCL',fmt(m.xUcl,3))+kpi('X centre',fmt(m.xCl,3))+kpi('X LCL',fmt(m.xLcl,3))+'</div><div class="kpis">'+kpi('MR UCL',fmt(m.rUcl,3))+kpi('MR centre',fmt(m.rCl,3))+'</div><p class="note">Limits: mean ± 2.66 × MR-bar. MR UCL = 3.267 × MR-bar. σ = MR-bar ÷ 1.128 = '+fmt(m.sigma,4)+'.</p>';
+  } else if(t==='p'||t==='np'){
+    var pb=val('cc_p'),nn=val('cc_n');
+    if(!(pb>0&&pb<1&&nn>0)){o.innerHTML='<p class="note">p-bar must be between 0 and 1, and n positive.</p>';return;}
+    var pc=t==='p'?pChart(pb,nn):npChart(pb,nn),dg=t==='p'?4:2;
+    res='<div class="kpis">'+kpi('UCL',fmt(pc.ucl,dg))+kpi('Centre',fmt(pc.cl,dg))+kpi('LCL',fmt(pc.lcl,dg))+'</div>';
+    if(nn*pb<5)res+='<p class="note">Warning: n × p-bar is below 5, so the normal approximation behind these limits is weak. Increase the sample size.</p>';
+  } else {
+    var cb=val('cc_c');
+    if(!(cb>0)){o.innerHTML='<p class="note">c-bar must be positive.</p>';return;}
+    var cc=cChart(cb);
+    res='<div class="kpis">'+kpi('UCL',fmt(cc.ucl,2))+kpi('Centre',fmt(cc.cl,2))+kpi('LCL',fmt(cc.lcl,2))+'</div>';
+  }
+  o.innerHTML=res;
+}
+setupTool({},update,function(){$('#cc_type').value='xbar';build('xbar');document.body.setAttribute('data-t','xbar');});
+
+</script>
+</body>
+</html>

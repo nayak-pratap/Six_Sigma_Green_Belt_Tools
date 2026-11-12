@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Scatter, Correlation and Regression | Green Belt Toolkit</title>
+<meta name="description" content="Paste pairs of x and y values, see the scatter plot with a fitted line, r, R², slope, p-value and a prediction.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@500;600;700&display=swap">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<header class="top"><div class="top-in"><a class="brand" href="../index.html"><i></i>Green Belt Toolkit</a><nav class="nav" aria-label="Sections"><a href="../index.html#calculators">Calculators</a><a href="../index.html#tools">Tools</a></nav><button class="icon-btn" id="themeBtn" type="button" aria-label="Switch colour theme">Theme</button></div></header>
+<div class="wrap"><main>
+<section style="padding-top:36px;display:flex;flex-direction:column;gap:10px"><span class="eyebrow">Tool · Analyze phase</span><h1 style="font-size:clamp(1.8rem,4vw,2.6rem)">Scatter, Correlation and Regression</h1><p class="lead">Paste pairs of x and y values, see the scatter plot with a fitted line, r, R², slope, p-value and a prediction.</p></section>
+<section class="tool-page" style="margin-top:28px">
+<div class="calc" id="tool"><div><div class="fields"><div class="field" style="grid-column:1/-1"><label for="r_data">x  y</label><textarea id="r_data" rows="9" spellcheck="false"></textarea></div><div class="field"><label for="r_pred">Predict y at x =</label><input id="r_pred" type="number" step="any"></div></div><p class="note" style="margin-top:12px">One pair per line, x then y, separated by a space or comma. Example: cutting speed in m/min against flank wear in µm after a fixed cut. Correlation shows association, not cause, and a line is only trustworthy inside the range of your data.</p></div><div class="out" id="out"></div></div>
+<div class="acts" style="margin-top:20px"><button class="btn" id="resetBtn" type="button">Reset to example values</button></div>
+</section>
+<div class="pagefoot"><a href="../index.html">All calculators and tools</a><span>Worked examples are illustrative. Check your own data, standards and customer requirements before acting on a result.</span></div>
+</main></div>
+<script src="../assets/lib.js"></script>
+<script>
+
+var EXTXT="150 62\n170 68\n190 79\n210 85\n230 98\n250 104\n270 121\n290 133";
+function update(){
+  var X=[],Y=[];
+  $('#r_data').value.split(/\n/).forEach(function(l){var a=parseNums(l);if(a.length>=2){X.push(a[0]);Y.push(a[1]);}});
+  var n=X.length; if(n<4){$('#out').innerHTML='<p class="note">Enter at least 4 pairs, one per line.</p>';return;}
+  var mx=mean(X),my=mean(Y),sxx=0,syy=0,sxy=0,i;
+  for(i=0;i<n;i++){sxx+=(X[i]-mx)*(X[i]-mx);syy+=(Y[i]-my)*(Y[i]-my);sxy+=(X[i]-mx)*(Y[i]-my);}
+  if(!(sxx>0&&syy>0)){$('#out').innerHTML='<p class="note">x and y each need some variation.</p>';return;}
+  var b=sxy/sxx,a=my-b*mx,r=sxy/Math.sqrt(sxx*syy),r2=r*r,sse=Math.max(0,syy-b*sxy),s=Math.sqrt(sse/(n-2)),se=s/Math.sqrt(sxx);
+  var tt=se>0?b/se:Infinity,p=se>0?tTwoSidedP(tt,n-2):0,tc=tInv(0.975,n-2);
+  var xmin=Math.min.apply(null,X),xmax=Math.max.apply(null,X),ymin=Math.min.apply(null,Y),ymax=Math.max.apply(null,Y),px=(xmax-xmin)*0.08||1,py=(ymax-ymin)*0.1||1;
+  var W=640,H=300,f=frame(W,H,xmin-px,xmax+px,ymin-py,ymax+py,{xl:'x',yl:'y'}),sv=f.base;
+  sv+='<line x1="'+f.xs(xmin-px)+'" y1="'+f.ys(a+b*(xmin-px))+'" x2="'+f.xs(xmax+px)+'" y2="'+f.ys(a+b*(xmax+px))+'" stroke-width="2" style="stroke:var(--ink)"/>';
+  X.forEach(function(v,k){sv+='<circle cx="'+f.xs(v)+'" cy="'+f.ys(Y[k])+'" r="4" style="fill:var(--accent)"/>';});
+  var pr=val('r_pred'),prTxt='';
+  if(pr===pr){var out=pr<xmin||pr>xmax;prTxt=kpi('Predicted y at '+pr,fmt(a+b*pr,3),out?'warn':'');if(out)prTxt+='<p class="note" style="grid-column:1/-1">That x is outside your data range, so the prediction is an extrapolation.</p>';}
+  var strength=Math.abs(r)>=0.8?'strong':Math.abs(r)>=0.5?'moderate':'weak',sg=p<0.05;
+  $('#out').innerHTML='<div class="kpis">'+kpi('n',n)+kpi('r',fmt(r,3),Math.abs(r)>=0.8?'good':Math.abs(r)>=0.5?'warn':'bad')+kpi('R²',fmt(r2*100,1)+'%')+kpi('Slope',fmt(b,4))+kpi('Intercept',fmt(a,3))+prTxt+'</div>'+svgWrap(W,H,sv,'Scatter plot with fitted line')+
+   '<div class="verdict '+(sg?'good':'warn')+'">There is a '+strength+' '+(r>0?'positive':'negative')+' linear relationship. The slope is '+(sg?'':'not ')+'statistically different from zero (p '+(p<0.0001?'< 0.0001':'= '+fmt(p,4))+'). Slope 95% CI: '+fmt(b-tc*se,4)+' to '+fmt(b+tc*se,4)+'. R² means the line explains '+fmt(r2*100,1)+'% of the variation in y.</div>'+
+   '<p class="note">Fit: y = '+fmt(a,3)+' + '+fmt(b,4)+' x. Residual standard error '+fmt(s,3)+'. Always look at the plot: a curve, an outlier or two clusters can all give a misleading r. Check residuals before using the equation to make decisions.</p>';
+}
+setupTool({r_data:EXTXT,r_pred:220},update);
+
+</script>
+</body>
+</html>

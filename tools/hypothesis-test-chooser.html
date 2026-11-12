@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hypothesis Test Chooser | Green Belt Toolkit</title>
+<meta name="description" content="Answer two questions about your data and get the right test, its non-parametric fallback, what to check first, and a worked example.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@500;600;700&display=swap">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<header class="top"><div class="top-in"><a class="brand" href="../index.html"><i></i>Green Belt Toolkit</a><nav class="nav" aria-label="Sections"><a href="../index.html#calculators">Calculators</a><a href="../index.html#tools">Tools</a></nav><button class="icon-btn" id="themeBtn" type="button" aria-label="Switch colour theme">Theme</button></div></header>
+<div class="wrap"><main>
+<section style="padding-top:36px;display:flex;flex-direction:column;gap:10px"><span class="eyebrow">Tool · Analyze phase</span><h1 style="font-size:clamp(1.8rem,4vw,2.6rem)">Hypothesis Test Chooser</h1><p class="lead">Answer two questions about your data and get the right test, its non-parametric fallback, what to check first, and a worked example.</p></section>
+<section class="tool-page" style="margin-top:28px">
+<div id="tool"><div id="chooser"></div><p class="note" style="margin-top:12px">Example values are the first selection in each list. Reset returns the chooser to them.</p></div>
+<div class="acts" style="margin-top:20px"><button class="btn" id="resetBtn" type="button">Reset to example values</button></div>
+</section>
+<div class="pagefoot"><a href="../index.html">All calculators and tools</a><span>Worked examples are illustrative. Check your own data, standards and customer requirements before acting on a result.</span></div>
+</main></div>
+<script src="../assets/lib.js"></script>
+<script>
+var CFG={"t":{"title":"Which hypothesis test?","first":{"label":"What type of outcome (Y) do you have?","options":[["c","Continuous (a reading: length, time, hardness)"],["d","Discrete (pass/fail, counts of defects)"]]},"results":{"c":[["One sample against a target value","One-sample t-test","One-sample Wilcoxon signed-rank","Data roughly normal or n is large; independent observations.","Is mean hone radius equal to the 30 µm target?"],["Two independent groups","Two-sample t-test (use Welch unless variances are clearly equal)","Mann-Whitney test","Each group roughly normal; independent groups.","Station A against station B."],["Same units before and after (paired)","Paired t-test","Wilcoxon signed-rank on the differences","Differences roughly normal; pairs are matched.","Same ten inserts measured before and after honing."],["Three or more groups","One-way ANOVA (then a multiple-comparison test)","Kruskal-Wallis test","Residuals roughly normal; similar variances; independent groups.","Three honing stations compared at once."],["Compare the variation (spread) of groups","F-test (2 groups) or Levene / Bartlett (2 or more)","Levene’s test is robust to non-normality","Bartlett and F need normality; Levene does not.","Is the new process less variable?"],["Relationship with another continuous variable","Correlation and simple regression","Spearman rank correlation","Linear pattern in the scatter plot; check residuals.","Tool life against cutting speed."]],"d":[["One proportion against a target","1-proportion test","Exact binomial test","Independent items; enough events and non-events.","Is defective rate equal to 1.5%?"],["Two proportions","2-proportion test","Fisher’s exact test (small counts)","Independent samples; expected counts of about 5 or more.","Defective rate before against after."],["Counts in categories against categories","Chi-square test of independence","Fisher’s exact when expected counts are under 5","Expected count of about 5 or more in each cell.","Defect type by shift."],["Defects per unit against a target","1-sample Poisson rate test","Exact Poisson test","Defects occur independently at a constant rate.","Is defects per unit equal to 0.05?"]]}},"c":{"title":"Which control chart?","first":{"label":"What type of data do you plot?","options":[["v","Variable (continuous readings)"],["a","Attribute (counts or proportions)"]]},"results":{"v":[["One measurement at a time (subgroup size 1)","Individuals and moving range (I-MR)","Use when data are slow, costly or one per batch.","Limits: mean ± 2.66 × MR-bar."],["Small subgroups (2 to 9)","X-bar and R chart","Rational subgroups, for example five consecutive parts.","Limits use A2, D3, D4 from tables."],["Large subgroups (10 or more)","X-bar and S chart","Standard deviation is a better spread estimate than range here.","Limits use A3, B3, B4."]],"a":[["Fraction defective, sample size varies","p chart","Items are pass/fail; sample size changes.","Limits: p-bar ± 3 √(p-bar (1 − p-bar) / n)."],["Number defective, sample size constant","np chart","Items are pass/fail; sample size fixed.","Limits: np-bar ± 3 √(n p-bar (1 − p-bar))."],["Defects per unit, area of opportunity constant","c chart","Counting defects (a unit can have several).","Limits: c-bar ± 3 √c-bar."],["Defects per unit, area of opportunity varies","u chart","Counting defects with varying unit size.","Limits: u-bar ± 3 √(u-bar / n)."]]}}}
+;
+var c=makeChooser(CFG.t,"test");$("#chooser").appendChild(c);
+setupTool({},function(){},function(){c.reset();});
+
+</script>
+</body>
+</html>

@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lean Flow Calculators | Green Belt Toolkit</title>
+<meta name="description" content="Takt time, Little’s law, process cycle efficiency and rolled throughput yield in one place.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@500;600;700&display=swap">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<header class="top"><div class="top-in"><a class="brand" href="../index.html"><i></i>Green Belt Toolkit</a><nav class="nav" aria-label="Sections"><a href="../index.html#calculators">Calculators</a><a href="../index.html#tools">Tools</a></nav><button class="icon-btn" id="themeBtn" type="button" aria-label="Switch colour theme">Theme</button></div></header>
+<div class="wrap"><main>
+<section style="padding-top:36px;display:flex;flex-direction:column;gap:10px"><span class="eyebrow">Calculator · Improve phase</span><h1 style="font-size:clamp(1.8rem,4vw,2.6rem)">Lean Flow Calculators</h1><p class="lead">Takt time, Little’s law, process cycle efficiency and rolled throughput yield in one place.</p></section>
+<section class="tool-page" style="margin-top:28px">
+<div class="grid g2" id="tool">
+<div class="sub-calc"><h3>Takt time</h3><div class="fields" style="margin-top:10px"><div class="field"><label for="l_avail">Available minutes per day</label><input id="l_avail" type="number" step="any"></div><div class="field"><label for="l_dem">Customer demand per day</label><input id="l_dem" type="number" step="any"></div></div><div class="kpis" id="lTakt" style="margin-top:10px"></div><p class="note" style="margin-top:8px">Takt = available time ÷ demand. A step slower than takt is a bottleneck.</p></div>
+<div class="sub-calc"><h3>Little’s law</h3><div class="fields" style="margin-top:10px"><div class="field"><label for="l_thr">Throughput (units per hour)</label><input id="l_thr" type="number" step="any"></div><div class="field"><label for="l_lt">Lead time (hours)</label><input id="l_lt" type="number" step="any"></div></div><div class="kpis" id="lLittle" style="margin-top:10px"></div><p class="note" style="margin-top:8px">WIP = throughput × lead time. To shorten lead time at the same throughput, cut WIP.</p></div>
+<div class="sub-calc"><h3>Process cycle efficiency</h3><div class="fields" style="margin-top:10px"><div class="field"><label for="l_va">Value-added time (min)</label><input id="l_va" type="number" step="any"></div><div class="field"><label for="l_tot">Total lead time (min)</label><input id="l_tot" type="number" step="any"></div></div><div class="kpis" id="lPce" style="margin-top:10px"></div><p class="note" style="margin-top:8px">PCE = value-added time ÷ lead time. Under 10% is common before Lean work.</p></div>
+<div class="sub-calc"><h3>Rolled throughput yield</h3><div class="field" style="margin-top:10px"><label for="l_rty">First-pass yield of each step (%), comma separated</label><input id="l_rty" type="text"></div><div class="kpis" id="lRty" style="margin-top:10px"></div><p class="note" style="margin-top:8px">RTY = product of step yields. Three good-looking steps still lose almost 10% of units.</p></div></div>
+<div class="acts" style="margin-top:20px"><button class="btn" id="resetBtn" type="button">Reset to example values</button></div>
+</section>
+<div class="pagefoot"><a href="../index.html">All calculators and tools</a><span>Worked examples are illustrative. Check your own data, standards and customer requirements before acting on a result.</span></div>
+</main></div>
+<script src="../assets/lib.js"></script>
+<script>
+
+function update(){
+  var av=val('l_avail'),dm=val('l_dem'),th=val('l_thr'),lt=val('l_lt'),va=val('l_va'),tt=val('l_tot');
+  $('#lTakt').innerHTML=av>0&&dm>0?kpi('Takt time',fmt(av/dm,2)+' min'):'<p class="note">Enter positive values.</p>';
+  $('#lLittle').innerHTML=th>=0&&lt>=0?kpi('WIP',fmt(th*lt,1)+' units'):'<p class="note">Enter non-negative values.</p>';
+  $('#lPce').innerHTML=va>=0&&tt>0?kpi('PCE',fmt(va/tt*100,1)+'%',va/tt>=0.25?'good':va/tt>=0.1?'warn':'bad'):'<p class="note">Enter a positive lead time.</p>';
+  var ys=($('#l_rty').value||'').split(',').map(function(x){return parseFloat(x);}).filter(function(x){return x===x;});
+  if(ys.length&&ys.every(function(y){return y>0&&y<=100;})){var p=ys.reduce(function(a,y){return a*y/100;},1);$('#lRty').innerHTML=kpi('RTY',fmt(p*100,1)+'%')+kpi('Steps',ys.length);}
+  else $('#lRty').innerHTML='<p class="note">Enter yields between 0 and 100, separated by commas.</p>';
+}
+setupTool({l_avail:450,l_dem:90,l_thr:20,l_lt:3,l_va:12,l_tot:240,l_rty:'98, 97, 95'},update);
+
+</script>
+</body>
+</html>

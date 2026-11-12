@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Visual Management Audit | Green Belt Toolkit</title>
+<meta name="description" content="Check whether a work area shows its status, standards and problems at a glance and whether the boards drive action.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@500;600;700&display=swap">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<header class="top"><div class="top-in"><a class="brand" href="../index.html"><i></i>Green Belt Toolkit</a><nav class="nav" aria-label="Sections"><a href="../index.html#calculators">Calculators</a><a href="../index.html#tools">Tools</a></nav><button class="icon-btn" id="themeBtn" type="button" aria-label="Switch colour theme">Theme</button></div></header>
+<div class="wrap"><main>
+<section style="padding-top:36px;display:flex;flex-direction:column;gap:10px"><span class="eyebrow">Tool · Control phase</span><h1 style="font-size:clamp(1.8rem,4vw,2.6rem)">Visual Management Audit</h1><p class="lead">Check whether a work area shows its status, standards and problems at a glance and whether the boards drive action.</p></section>
+<section class="tool-page" style="margin-top:28px">
+<div id="tool"><p class="note" style="margin-bottom:12px">Stand 3 metres from the board or area and see whether someone new can tell what is normal and what is wrong in under 30 seconds. Example: a hone cell with a performance board.</p><div id="g"></div><div class="out" id="out" style="margin-top:16px"></div></div>
+<div class="acts" style="margin-top:20px"><button class="btn" id="resetBtn" type="button">Reset to example values</button></div>
+</section>
+<div class="pagefoot"><a href="../index.html">All calculators and tools</a><span>Worked examples are illustrative. Check your own data, standards and customer requirements before acting on a result.</span></div>
+</main></div>
+<script src="../assets/lib.js"></script>
+<script>
+
+var cfg={host:'g',scale:[[0,'No'],[1,'Partly'],[2,'Yes']],
+ groups:[{n:'Status at a glance',items:['Normal and abnormal conditions look different (colours, andon, limits)','Machine and line status is visible from the aisle','Targets and actuals are shown for the same period','Charts are updated on time, by hand or automatically']},
+  {n:'Standards visible',items:['Work instructions and standards are at point of use','Control limits and reaction plans are posted at the measurement point','Quality examples (good and bad) are displayed','Inventory min and max levels are marked']},
+  {n:'Problems visible and acted on',items:['Deviations are written on the board when they happen','Each problem has an owner and a date','Closed problems are removed and trends reviewed','Escalation route is clear']},
+  {n:'Routines',items:['The team meets at the board every day','Meetings are short and use the board','Leaders attend and ask about the data','Charts are used to decide, not only to display']}],
+ example:[[2,2,1,1],[1,1,1,0],[1,1,0,0],[2,1,1,1]],
+ bands:[[85,'Strong visual management.','good'],[60,'Partly effective.','warn'],[35,'Display, not management.','warn'],[0,'Little visual management in place.','bad']],
+ advice:function(g){return 'Weakest area: '+g+'. A board nobody uses in a daily meeting is wallpaper. Start with the routine.';}};
+var audit=auditTool(cfg);
+setupTool({},function(){},function(){audit.reset();});
+
+</script>
+</body>
+</html>

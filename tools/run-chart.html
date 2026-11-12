@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Run Chart with Runs Test | Green Belt Toolkit</title>
+<meta name="description" content="Plot data in time order against its median and test for clustering, mixtures, shifts and trends.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@500;600;700&display=swap">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<header class="top"><div class="top-in"><a class="brand" href="../index.html"><i></i>Green Belt Toolkit</a><nav class="nav" aria-label="Sections"><a href="../index.html#calculators">Calculators</a><a href="../index.html#tools">Tools</a></nav><button class="icon-btn" id="themeBtn" type="button" aria-label="Switch colour theme">Theme</button></div></header>
+<div class="wrap"><main>
+<section style="padding-top:36px;display:flex;flex-direction:column;gap:10px"><span class="eyebrow">Tool · Measure phase</span><h1 style="font-size:clamp(1.8rem,4vw,2.6rem)">Run Chart with Runs Test</h1><p class="lead">Plot data in time order against its median and test for clustering, mixtures, shifts and trends.</p></section>
+<section class="tool-page" style="margin-top:28px">
+<div class="calc" id="tool"><div><div class="fields"><div class="field" style="grid-column:1/-1"><label for="u_data">Readings in time order</label><textarea id="u_data" rows="8" spellcheck="false"></textarea></div></div><p class="note" style="margin-top:12px">Readings in time order. The test counts runs of points on the same side of the median. Too few runs suggest clustering or shifts; too many suggest mixing or oscillation. Example: 24 weekly chip rates where a shift occurs in the second half.</p></div><div class="out" id="out"></div></div>
+<div class="acts" style="margin-top:20px"><button class="btn" id="resetBtn" type="button">Reset to example values</button></div>
+</section>
+<div class="pagefoot"><a href="../index.html">All calculators and tools</a><span>Worked examples are illustrative. Check your own data, standards and customer requirements before acting on a result.</span></div>
+</main></div>
+<script src="../assets/lib.js"></script>
+<script>
+
+var EXTXT="4.6 5.1 4.4 5.3 4.9 4.7 5.0 4.5 5.2 4.8 4.4 5.1 4.0 3.8 3.6 3.9 3.5 3.7 3.4 3.6 3.3 3.5 3.2 3.4";
+function update(){
+  var x=parseNums($('#u_data').value),n=x.length;
+  if(n<10){$('#out').innerHTML='<p class="note">Enter at least 10 readings.</p>';return;}
+  var s=x.slice().sort(function(a,b){return a-b;}),med=quant(s,0.5),side=[],i;
+  x.forEach(function(v){side.push(v>med?1:v<med?-1:0);});
+  var pts=side.filter(function(v){return v!==0;}),n1=pts.filter(function(v){return v>0;}).length,n2=pts.length-n1,runs=pts.length?1:0,longest=1,cur=1;
+  for(i=1;i<pts.length;i++){if(pts[i]!==pts[i-1]){runs++;cur=1;}else{cur++;if(cur>longest)longest=cur;}}
+  var m=pts.length,mu=2*n1*n2/m+1,vr=2*n1*n2*(2*n1*n2-m)/(m*m*(m-1)),z=vr>0?(runs-mu)/Math.sqrt(vr):0,p=2*(1-normCdf(Math.abs(z)));
+  var up=1,dn=1,mu_=1,md=1;for(i=1;i<n;i++){if(x[i]>x[i-1]){up++;dn=1;}else if(x[i]<x[i-1]){dn++;up=1;}else{up=1;dn=1;}if(up>mu_)mu_=up;if(dn>md)md=dn;}
+  var trend=Math.max(mu_,md),sig=[];
+  if(p<0.05)sig.push(z<0?'Fewer runs than expected ('+runs+' vs about '+fmt(mu,1)+'): clustering, a shift or a trend.':'More runs than expected ('+runs+' vs about '+fmt(mu,1)+'): mixtures or oscillation, possibly two sources alternating.');
+  if(longest>=8)sig.push('A run of '+longest+' points on one side of the median suggests a shift.');
+  if(trend>=6)sig.push('A run of '+trend+' points steadily '+(mu_>=md?'rising':'falling')+' suggests a trend.');
+  var W=640,H=260,f=frame(W,H,1,n,Math.min(s[0],med)-(s[n-1]-s[0])*0.08,s[n-1]+(s[n-1]-s[0])*0.08,{xl:'Observation',yl:'Value'}),sv=f.base;
+  sv+='<line x1="'+f.ml+'" x2="'+(W-f.mr)+'" y1="'+f.ys(med)+'" y2="'+f.ys(med)+'" stroke-dasharray="5 4" style="stroke:var(--ink-2)"/><text x="'+(W-f.mr)+'" y="'+(f.ys(med)-4)+'" text-anchor="end" '+f.t+'>median '+fmt(med,2)+'</text>';
+  sv+='<polyline fill="none" stroke-width="1.5" style="stroke:var(--accent)" points="'+x.map(function(v,k){return f.xs(k+1)+','+f.ys(v);}).join(' ')+'"/>'+x.map(function(v,k){return '<circle cx="'+f.xs(k+1)+'" cy="'+f.ys(v)+'" r="3" style="fill:var(--accent)"/>';}).join('');
+  $('#out').innerHTML='<div class="kpis">'+kpi('Points',n)+kpi('Median',fmt(med,3))+kpi('Runs',runs+' (expect '+fmt(mu,1)+')')+kpi('p-value',fmt(p,3),p<0.05?'bad':'good')+kpi('Longest run',longest)+'</div>'+svgWrap(W,H,sv,'Run chart')+
+   '<div class="verdict '+(sig.length?'bad':'good')+'">'+(sig.length?'<ul class="plain">'+sig.map(function(t){return '<li>'+esc(t)+'</li>';}).join('')+'</ul>The process is not random about its median. Find out what changed.':'No evidence of non-random patterns. The process looks stable about its median.')+'</div><p class="note">A run chart needs no limits and no assumptions about the distribution, which makes it a good first look. If it looks stable, move on to a control chart for ongoing monitoring.</p>';
+}
+setupTool({u_data:EXTXT},update);
+
+</script>
+</body>
+</html>

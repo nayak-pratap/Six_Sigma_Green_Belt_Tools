@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Theory of Constraints: Bottleneck Finder | Green Belt Toolkit</title>
+<meta name="description" content="Find the constraint in a line from step capacities, see the throughput it allows, and test what happens when you improve it.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@500;600;700&display=swap">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<header class="top"><div class="top-in"><a class="brand" href="../index.html"><i></i>Green Belt Toolkit</a><nav class="nav" aria-label="Sections"><a href="../index.html#calculators">Calculators</a><a href="../index.html#tools">Tools</a></nav><button class="icon-btn" id="themeBtn" type="button" aria-label="Switch colour theme">Theme</button></div></header>
+<div class="wrap"><main>
+<section style="padding-top:36px;display:flex;flex-direction:column;gap:10px"><span class="eyebrow">Tool · Improve phase</span><h1 style="font-size:clamp(1.8rem,4vw,2.6rem)">Theory of Constraints: Bottleneck Finder</h1><p class="lead">Find the constraint in a line from step capacities, see the throughput it allows, and test what happens when you improve it.</p></section>
+<section class="tool-page" style="margin-top:28px">
+<div id="tool"><p class="note" style="margin-bottom:12px">Enter the capacity of each step in units per hour. The slowest step sets the throughput of the whole line. Try the “improve the constraint” percentage to see where the constraint moves next. Example: the insert line.</p><div class="fields" style="grid-template-columns:repeat(auto-fit,minmax(min(100%,200px),1fr));margin-bottom:14px"><div class="field"><label for="o_dm">Customer demand (units per hour)</label><input id="o_dm" type="number" step="any"></div><div class="field"><label for="o_imp">Improve the constraint by (%)</label><input id="o_imp" type="number" step="any" min="0"></div></div><div id="g"></div><div class="out" id="out" style="margin-top:16px"></div></div>
+<div class="acts" style="margin-top:20px"><button class="btn" id="resetBtn" type="button">Reset to example values</button></div>
+</section>
+<div class="pagefoot"><a href="../index.html">All calculators and tools</a><span>Worked examples are illustrative. Check your own data, standards and customer requirements before acting on a result.</span></div>
+</main></div>
+<script src="../assets/lib.js"></script>
+<script>
+
+var grid=gridTable({host:'g',extra:['Utilisation'],
+ cols:[{k:'n',l:'Step',w:170},{k:'c',l:'Capacity (units/h)',t:'num',min:0}],
+ example:[{n:'Press',c:60},{n:'Sinter',c:45},{n:'Hone',c:24},{n:'Wash',c:50},{n:'Inspect',c:30},{n:'Coat',c:28}],
+ compute:function(rows){
+  var caps=rows.map(function(r){return nz(r.c);});if(!rows.length||caps.some(function(c){return c<=0;}))return {out:'<p class="note">Every step needs a capacity above zero.</p>'};
+  var thr=Math.min.apply(null,caps),bi=caps.indexOf(thr),dm=val('o_dm'),imp=val('o_imp')||0;
+  var c2=caps.slice();c2[bi]=caps[bi]*(1+imp/100);var thr2=Math.min.apply(null,c2),bi2=c2.indexOf(thr2);
+  var cells=rows.map(function(r,i){return [i===bi?'<b style="color:var(--bad)">100% (constraint)</b>':fmt(thr/caps[i]*100,0)+'%'];});
+  return {cells:cells,out:'<div class="kpis">'+kpi('Line throughput',fmt(thr,1)+' /h',dm>0?(thr>=dm?'good':'bad'):'')+kpi('Constraint',esc(rows[bi].n),'warn')+(dm>0?kpi('Gap to demand',fmt(thr-dm,1)+' /h',thr>=dm?'good':'bad'):'')+'</div>'+hbars(rows.map(function(r,i){return {l:r.n,v:caps[i],c:i===bi?'var(--bad)':''};}),function(v){return fmt(v,0);})+
+   '<div class="verdict warn" style="margin-top:12px"><b>If '+esc(rows[bi].n)+' improves by '+fmt(imp,0)+'%</b>: throughput becomes '+fmt(thr2,1)+' /h ('+(thr2>thr?'+'+fmt((thr2-thr)/thr*100,0)+'%':'no gain')+') and the constraint '+(bi2===bi?'stays at '+esc(rows[bi].n)+'.':'moves to <b>'+esc(rows[bi2].n)+'</b>.')+'</div><div class="case" style="margin-top:12px"><h4>The five focusing steps</h4><ol class="plain"><li><b>Identify</b> the constraint: '+esc(rows[bi].n)+'.</li><li><b>Exploit</b> it: never let it wait, starve or make scrap. Protect it with a time buffer.</li><li><b>Subordinate</b> everything else to its pace; no step ahead of it should overproduce.</li><li><b>Elevate</b> it: add capacity or cut its changeovers.</li><li><b>Repeat</b>: when the constraint moves, start again.</li></ol></div><p class="note">An hour lost at the constraint is an hour lost for the whole line; an hour saved at a non-constraint is a mirage.</p>'};
+ }});
+function upd(){grid.recompute();}
+setupTool({o_dm:30,o_imp:20},upd,function(){$('#o_dm').value=30;$('#o_imp').value=20;grid.reset();});
+
+</script>
+</body>
+</html>

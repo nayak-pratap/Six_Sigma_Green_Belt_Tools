@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Spaghetti Diagram and Travel Distance | Green Belt Toolkit</title>
+<meta name="description" content="Enter the route of a person or part on the floor plan, compare a current and a proposed layout, and see the distance and time saved.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@500;600;700&display=swap">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<header class="top"><div class="top-in"><a class="brand" href="../index.html"><i></i>Green Belt Toolkit</a><nav class="nav" aria-label="Sections"><a href="../index.html#calculators">Calculators</a><a href="../index.html#tools">Tools</a></nav><button class="icon-btn" id="themeBtn" type="button" aria-label="Switch colour theme">Theme</button></div></header>
+<div class="wrap"><main>
+<section style="padding-top:36px;display:flex;flex-direction:column;gap:10px"><span class="eyebrow">Tool · Analyze phase</span><h1 style="font-size:clamp(1.8rem,4vw,2.6rem)">Spaghetti Diagram and Travel Distance</h1><p class="lead">Enter the route of a person or part on the floor plan, compare a current and a proposed layout, and see the distance and time saved.</p></section>
+<section class="tool-page" style="margin-top:28px">
+<div id="tool"><p class="note" style="margin-bottom:12px">One stop per line: x and y in metres from a corner of the floor, then a label. Stops are visited in order. Example: moving a part from stores through the hone cell to coating, before and after rearranging the cell.</p><div class="fields" style="grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr))"><div class="field"><label for="sp_cur">Current route (x y label)</label><textarea id="sp_cur" rows="7" spellcheck="false"></textarea></div><div class="field"><label for="sp_new">Proposed route (x y label)</label><textarea id="sp_new" rows="7" spellcheck="false"></textarea></div><div class="field"><label for="sp_trips">Trips per day</label><input id="sp_trips" type="number" step="any" min="0"></div><div class="field"><label for="sp_speed">Walking speed (m/s)</label><input id="sp_speed" type="number" step="any" min="0.1"></div></div><div class="out" id="out" style="margin-top:16px"></div></div>
+<div class="acts" style="margin-top:20px"><button class="btn" id="resetBtn" type="button">Reset to example values</button></div>
+</section>
+<div class="pagefoot"><a href="../index.html">All calculators and tools</a><span>Worked examples are illustrative. Check your own data, standards and customer requirements before acting on a result.</span></div>
+</main></div>
+<script src="../assets/lib.js"></script>
+<script>
+
+var CUR="2 2 Stores\n32 4 Hone\n5 22 Wash\n34 24 Inspect\n3 8 Coating\n2 2 Stores",NEW="2 2 Stores\n10 4 Hone\n14 4 Wash\n18 4 Inspect\n22 4 Coating\n2 2 Stores";
+function route(t){return t.split(/\n/).map(function(l){var m=l.trim().match(/^(-?[\d.]+)[\s,]+(-?[\d.]+)\s*(.*)$/);return m?{x:+m[1],y:+m[2],l:m[3]||''}:null;}).filter(Boolean);}
+function dist(p){var d=0;for(var i=1;i<p.length;i++)d+=Math.hypot(p[i].x-p[i-1].x,p[i].y-p[i-1].y);return d;}
+function update(){
+  var a=route($('#sp_cur').value),b=route($('#sp_new').value),tr=val('sp_trips'),sp=val('sp_speed');
+  if(a.length<2){$('#out').innerHTML='<p class="note">Enter at least two stops for the current route.</p>';return;}
+  var pts=a.concat(b),xs0=Math.min.apply(null,pts.map(function(p){return p.x;}))-3,xs1=Math.max.apply(null,pts.map(function(p){return p.x;}))+3,ys0=Math.min.apply(null,pts.map(function(p){return p.y;}))-3,ys1=Math.max.apply(null,pts.map(function(p){return p.y;}))+3;
+  var W=560,H=Math.max(200,Math.min(420,W*(ys1-ys0)/(xs1-xs0))),f=frame(W,H,xs0,xs1,ys0,ys1,{xl:'metres',yl:'metres'}),s=f.base;
+  function draw(p,col,dash){if(p.length<2)return;s+='<polyline fill="none" stroke-width="2" '+(dash?'stroke-dasharray="6 4" ':'')+'style="stroke:'+col+'" points="'+p.map(function(q){return f.xs(q.x)+','+f.ys(q.y);}).join(' ')+'"/>';p.forEach(function(q,i){s+='<circle cx="'+f.xs(q.x)+'" cy="'+f.ys(q.y)+'" r="4" style="fill:'+col+'"/>';if(!dash&&q.l&&p.slice(0,i).every(function(z){return z.l!==q.l;}))s+='<text x="'+(f.xs(q.x)+7)+'" y="'+(f.ys(q.y)-6)+'" '+f.t+'>'+esc(q.l)+'</text>';});}
+  draw(a,'var(--bad)',false);draw(b,'var(--good)',true);
+  var da=dist(a),db=dist(b),k='';
+  if(b.length>1&&tr>=0&&sp>0){var sv=(da-db)*tr;k=kpi('Distance saved per day',fmt(sv/1000,2)+' km',sv>0?'good':'bad')+kpi('Walking time saved',fmt(sv/sp/60,0)+' min/day')+kpi('Per year (250 days)',fmt(sv*250/1000,0)+' km');}
+  $('#out').innerHTML='<div class="kpis">'+kpi('Current route',fmt(da,0)+' m',b.length>1?'bad':'')+(b.length>1?kpi('Proposed route',fmt(db,0)+' m','good')+kpi('Reduction',fmt((da-db)/da*100,0)+'%','good'):'')+k+'</div>'+svgWrap(W,H,s,'Spaghetti diagram of current and proposed routes')+'<p class="note">Solid red = current route, dashed green = proposed. Straight-line distance understates real walking paths around machines; measure real paths on the floor when you can. Walking is one waste; also look at what is carried and how often.</p>';
+}
+setupTool({sp_cur:CUR,sp_new:NEW,sp_trips:60,sp_speed:1.2},update);
+
+</script>
+</body>
+</html>

@@ -265,3 +265,10 @@ textarea:focus{border-color:var(--accent);outline:none}
 .pagefoot{margin-top:40px;padding-top:16px;border-top:1px solid var(--line);font-size:.85rem;color:var(--ink-2);display:flex;gap:16px;flex-wrap:wrap}
 .tbl-wrap td input,.tbl-wrap th input{max-width:100%}
 .fmea-name{width:100%;min-width:140px}
+@media (max-width:540px){.hide-s{display:none}.nav a{padding-left:7px;padding-right:7px}}
+
+/* cross-link to the companion workbook repo */
+.crosslink{display:flex;flex-direction:column;gap:5px;background:var(--accent-soft);border:1px solid var(--accent);border-radius:var(--r);padding:15px 17px;text-decoration:none;color:var(--ink);margin-top:38px}
+.crosslink:hover{box-shadow:0 2px 10px rgba(0,0,0,.09)}
+.crosslink h3{font-size:1.04rem;color:var(--accent)}
+.crosslink p{font-size:.87rem;color:var(--ink-2);margin-top:2px}

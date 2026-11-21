@@ -2,6 +2,10 @@
 
 Interactive calculators and tools for Six Sigma Green Belt projects. Each page opens with worked example values from one running case (chipped carbide inserts), recalculates as you type, and has a **Reset to example values** button. Everything runs in the browser: no build step, no server, no data leaves the page.
 
+## Where these tools lead
+
+**[DMAIC Project Workbook](https://nayak-pratap.github.io/DMAIC_Project_Workbook/)** carries one project from charter to closure on a single dataset, where every stage computes from the stage before it. It runs at Black Belt depth — regression, a designed experiment, Gage R&R by the ANOVA method — so it is worth reading for the shape of a whole project even before you need those methods.
+
 ## Calculators
 
 | Page | What it does |
